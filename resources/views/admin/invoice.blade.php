@@ -125,7 +125,7 @@
     <div id="invoice">
         <div class="invoice-body">
             <div id="invoice-header" class="text-center mb-4">
-                <img src="{{ asset('images/junixlogo1.PNG') }}" alt="App Logo">
+                <img src="{{ asset('images/junixlogo1.png') }}" alt="App Logo">
                 <h3>Junik Irrigation Suppliers</h3>
                 <h3>Festus Building, Mwingi</h3>
                 <h3>Pin: AO12436333276</h3>
