@@ -18,14 +18,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-   // app/Providers/AppServiceProvider.php
-
-public function boot()
-{
-    if (env('APP_ENV') === 'production') {
-        URL::forceScheme('https');
+    public function boot(): void
+    {
+        if (env('APP_ENV') === 'production') {
+            URL::forceScheme('https');
+        }
     }
-}
-
-    
 }
