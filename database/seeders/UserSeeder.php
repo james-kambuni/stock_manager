@@ -17,16 +17,16 @@ class UserSeeder extends Seeder
 {
     // Admin user
     User::create([
-    'name' => 'James',
-    'email' => 'admin@example.com',
-    'password' => Hash::make('password'),
+    'name' => 'Junik agri-suppliers',
+    'email' => 'junix@gmail.com',
+    'password' => Hash::make('junik123'),
     'role' => 'admin',
 ]);
 
 
     // Regular user
     User::create([
-        'name' => 'Normal User',
+        'name' => 'Normal user',
         'email' => 'user@example.com',
         'password' => Hash::make('password'),
         'is_admin' => false,
