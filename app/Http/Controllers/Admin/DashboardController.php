@@ -12,11 +12,17 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-   public function index()
+    public function index()
     {
         $productCount = Product::count();
-        $salesToday = Sale::whereDate('created_at', today())->sum('quantity');
+
+        // ✅ Correct: Get total quantity from sale_items
+        $salesToday = DB::table('sale_items')
+                        ->whereDate('created_at', today())
+                        ->sum('quantity');
+
         $purchasesToday = Purchase::whereDate('created_at', today())->sum('quantity');
+
         $userCount = User::count();
 
         // Profits for last 4 months
@@ -26,17 +32,17 @@ class DashboardController extends Controller
         for ($i = 3; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             $label = $month->format('M');
-            $totalSales = Sale::join('products', 'sales.product_id', '=', 'products.id')
-    ->whereMonth('sales.created_at', $month->month)
-    ->whereYear('sales.created_at', $month->year)
-    ->sum(DB::raw('sales.quantity * products.selling_price'));
 
+            // ✅ Correct: Use sale_items table for sales totals
+            $totalSales = DB::table('sale_items')
+                ->whereMonth('created_at', $month->month)
+                ->whereYear('created_at', $month->year)
+                ->sum(DB::raw('unit_price * quantity'));
 
-            $totalPurchases = Purchase::join('products', 'purchases.product_id', '=', 'products.id')
-    ->whereMonth('purchases.created_at', $month->month)
-    ->whereYear('purchases.created_at', $month->year)
-    ->sum(DB::raw('purchases.quantity * products.cost_price'));
-
+            $totalPurchases = DB::table('purchases')
+                ->whereMonth('created_at', $month->month)
+                ->whereYear('created_at', $month->year)
+                ->sum(DB::raw('unit_cost * quantity'));
 
             $months[] = $label;
             $profits[] = round($totalSales - $totalPurchases, 2);
@@ -51,6 +57,4 @@ class DashboardController extends Controller
             'profits'
         ));
     }
-    
-    
 }

@@ -17,7 +17,7 @@ class ReportController extends Controller
 
         switch ($type) {
             case 'sales':
-                $sales = Sale::with('product')->latest()->get();
+                $sales = Sale::with('items.product')->latest()->get();
                 return view('users.reports', compact('sales'))->with('reportType', 'sales');
 
             case 'purchases':
@@ -30,12 +30,12 @@ class ReportController extends Controller
         }
     }
 
-    // ✅ Add this method for standalone today's report page
+    // Show today's sales and purchases
     public function today()
     {
         $today = Carbon::today();
 
-        $sales = Sale::with('product')
+        $sales = Sale::with('items.product')
                     ->whereDate('created_at', $today)
                     ->get();
 

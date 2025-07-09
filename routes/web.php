@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\User\ReportController as UserReportController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\SalesController;
 use App\Http\Controllers\User\ProductController as UserProductController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\UserDashboardController;
@@ -68,8 +69,15 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/products/sell', [UserProductController::class, 'sell'])->name('products.sell');
     Route::get('/user/reports', [UserReportController::class, 'index'])->name('user.reports.index');
     Route::get('/user/today-report', [App\Http\Controllers\User\ReportController::class, 'today'])->name('user.today.report');
+    Route::post('/products/sell-multiple', [UserProductController::class, 'sellMultiple'])->name('products.sell.multiple');
+    Route::get('/receipt/{saleId}', [UserProductController::class, 'printReceipt'])->name('print.receipt');
 
 });
+
+// Route::get('/sales/create', [SalesController::class, 'create'])->name('sales.create');
+// Route::post('/sales',       [SalesController::class, 'store'])->name('sales.store');
+// Route::get('/sales/{sale}/receipt', [SalesController::class, 'receipt'])->name('sales.receipt');
+
 
 Route::middleware(['auth'])->group(function () {
     
