@@ -5,7 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Purchase;
 use Carbon\Carbon;
 
@@ -17,7 +17,7 @@ class ReportController extends Controller
 
         switch ($type) {
             case 'sales':
-                $sales = Sale::with('items.product')->latest()->get();
+                $sales = SaleItem::with('product', 'sale')->latest()->get();
                 return view('users.reports', compact('sales'))->with('reportType', 'sales');
 
             case 'purchases':
@@ -35,13 +35,13 @@ class ReportController extends Controller
     {
         $today = Carbon::today();
 
-        $sales = Sale::with('items.product')
+        $sales = SaleItem::with('product', 'sale')
                     ->whereDate('created_at', $today)
                     ->get();
 
         $purchases = Purchase::with('product')
-                            ->whereDate('created_at', $today)
-                            ->get();
+                    ->whereDate('created_at', $today)
+                    ->get();
 
         return view('users.reports.today', compact('sales', 'purchases'));
     }

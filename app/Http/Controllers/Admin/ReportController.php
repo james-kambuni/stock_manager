@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Sale;
-use App\Models\Purchase;
 use App\Models\Product;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\Purchase;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -24,12 +25,14 @@ class ReportController extends Controller
 
         if ($reportType === 'inventory') {
             $products = Product::all();
+
         } elseif ($reportType === 'sales') {
-            $query = Sale::with('items.product');
+            $query = SaleItem::with('product', 'sale');
             if ($from && $to) {
                 $query->whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59']);
             }
             $sales = $query->latest()->get();
+
         } elseif ($reportType === 'purchases') {
             $query = Purchase::with('product');
             if ($from && $to) {
@@ -49,19 +52,15 @@ class ReportController extends Controller
             $month = now()->subMonths($i);
             $monthName = $month->format('F');
 
-            // Total sales from sale_items
             $totalSales = DB::table('sale_items')
                 ->whereMonth('created_at', $month->month)
                 ->whereYear('created_at', $month->year)
-                ->select(DB::raw('SUM(quantity * unit_price) as total_sales'))
-                ->value('total_sales') ?? 0;
+                ->value(DB::raw('SUM(quantity * unit_price)')) ?? 0;
 
-            // Total purchases
             $totalPurchases = DB::table('purchases')
                 ->whereMonth('created_at', $month->month)
                 ->whereYear('created_at', $month->year)
-                ->select(DB::raw('SUM(quantity * unit_cost) as total_purchases'))
-                ->value('total_purchases') ?? 0;
+                ->value(DB::raw('SUM(quantity * unit_cost)')) ?? 0;
 
             $profit = $totalSales - $totalPurchases;
 
@@ -78,13 +77,13 @@ class ReportController extends Controller
     {
         $today = Carbon::today();
 
-        $sales = Sale::with('items.product')
-            ->whereDate('created_at', $today)
-            ->get();
+        $sales = SaleItem::with('product', 'sale')
+                    ->whereDate('created_at', $today)
+                    ->get();
 
         $purchases = Purchase::with('product')
-            ->whereDate('created_at', $today)
-            ->get();
+                    ->whereDate('created_at', $today)
+                    ->get();
 
         return view('admin.reports.today', compact('sales', 'purchases'));
     }
@@ -96,15 +95,15 @@ class ReportController extends Controller
 
         switch ($request->type) {
             case 'sales':
-                $data = Sale::with('items.product')
-                    ->whereBetween('created_at', [$start, $end])
-                    ->get();
+                $data = SaleItem::with('product', 'sale')
+                        ->whereBetween('created_at', [$start, $end])
+                        ->get();
                 break;
 
             case 'purchases':
                 $data = Purchase::with('product')
-                    ->whereBetween('created_at', [$start, $end])
-                    ->get();
+                        ->whereBetween('created_at', [$start, $end])
+                        ->get();
                 break;
 
             case 'inventory':
