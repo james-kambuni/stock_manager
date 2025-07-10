@@ -64,80 +64,84 @@
                                     @csrf @method('DELETE')
                                     <button class="btn btn-sm btn-danger" onclick="return confirm('Delete product?')">Delete</button>
                                 </form>
-                                <!-- Update logic can be added with modal or separate edit page -->
-                            </td>
-                            <button class="btn btn-sm btn-warning edit-btn"
-                                data-id="{{ $product->id }}"
-                                data-name="{{ $product->name }}"
-                                data-stock="{{ $product->stock }}"
-                                data-cost="{{ $product->cost_price }}"
-                                data-price="{{ $product->selling_price }}"
-                                data-bs-toggle="modal" data-bs-target="#editProductModal">
-                                Edit
-                            </button>
 
+                                <button class="btn btn-sm btn-warning edit-btn"
+                                    data-id="{{ $product->id }}"
+                                    data-name="{{ $product->name }}"
+                                    data-stock="{{ $product->stock }}"
+                                    data-cost="{{ $product->cost_price }}"
+                                    data-price="{{ $product->selling_price }}"
+                                    data-bs-toggle="modal" data-bs-target="#editProductModal">
+                                    Edit
+                                </button>
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
+
                 <!-- Edit Product Modal -->
-<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="POST" id="editProductForm">
-        @csrf
-        @method('PUT')
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Product</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="editProductId">
-                <div class="mb-3">
-                    <label>Name</label>
-                    <input type="text" class="form-control" id="editName" name="name" readonly>
+                <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <form method="POST" id="editProductForm">
+                            @csrf
+                            @method('PUT')
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Edit Product</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="hidden" id="editProductId">
+                                    <div class="mb-3">
+                                        <label>Name</label>
+                                        <input type="text" class="form-control" id="editName" name="name" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label>Stock</label>
+                                        <input type="number" step="0.01" class="form-control" id="editStock" name="stock">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label>Cost Price</label>
+                                        <input type="number" step="0.01" class="form-control" id="editCost" name="cost_price">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label>Selling Price</label>
+                                        <input type="number" step="0.01" class="form-control" id="editPrice" name="selling_price">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button class="btn btn-primary" type="submit">Update</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label>Stock</label>
-                    <input type="number" step="0.01" class="form-control" id="editStock" name="stock">
-                </div>
-                <div class="mb-3">
-                    <label>Cost Price</label>
-                    <input type="number" step="0.01" class="form-control" id="editCost" name="cost_price">
-                </div>
-                <div class="mb-3">
-                    <label>Selling Price</label>
-                    <input type="number" step="0.01" class="form-control" id="editPrice" name="selling_price">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" type="submit">Update</button>
-            </div>
-        </div>
-    </form>
-  </div>
-</div>
 
             </div>
         </div>
     </div>
 </div>
-@endsection
+
+<!-- JavaScript -->
 <script>
-    const editBtns = document.querySelectorAll('.edit-btn');
-    const form = document.getElementById('editProductForm');
+    document.addEventListener('DOMContentLoaded', function () {
+        const editBtns = document.querySelectorAll('.edit-btn');
+        const form = document.getElementById('editProductForm');
 
-    editBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            document.getElementById('editProductId').value = id;
-            document.getElementById('editName').value = btn.dataset.name;
-            document.getElementById('editStock').value = btn.dataset.stock;
-            document.getElementById('editCost').value = btn.dataset.cost;
-            document.getElementById('editPrice').value = btn.dataset.price;
+        editBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                document.getElementById('editProductId').value = id;
+                document.getElementById('editName').value = btn.dataset.name;
+                document.getElementById('editStock').value = btn.dataset.stock;
+                document.getElementById('editCost').value = btn.dataset.cost;
+                document.getElementById('editPrice').value = btn.dataset.price;
 
-            form.action = `/admin/products/${id}`;
+                form.action = `/admin/products/${id}`;
+            });
         });
     });
 </script>
+@endsection
