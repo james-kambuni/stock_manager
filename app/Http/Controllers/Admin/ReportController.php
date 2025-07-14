@@ -45,48 +45,103 @@ class ReportController extends Controller
     }
 
     public function profits()
-    {
-        $profits = [];
+{
+    $profits = [];
 
-        for ($i = 3; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $monthName = $month->format('F');
+    // Monthly Profit for past 4 months
+    for ($i = 3; $i >= 0; $i--) {
+        $month = now()->subMonths($i);
+        $monthName = $month->format('F');
 
-            $totalSales = DB::table('sale_items')
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->value(DB::raw('SUM(quantity * unit_price)')) ?? 0;
+        $totalSales = DB::table('sale_items')
+            ->whereMonth('created_at', $month->month)
+            ->whereYear('created_at', $month->year)
+            ->sum(DB::raw('quantity * unit_price'));
 
-            $totalPurchases = DB::table('purchases')
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->value(DB::raw('SUM(quantity * unit_cost)')) ?? 0;
+        $totalPurchases = DB::table('purchases')
+            ->whereMonth('created_at', $month->month)
+            ->whereYear('created_at', $month->year)
+            ->sum(DB::raw('quantity * unit_cost'));
 
-            $profit = $totalSales - $totalPurchases;
+        $profit = $totalSales - $totalPurchases;
 
-            $profits[] = [
-                'month' => $monthName,
-                'profit' => $profit,
-            ];
-        }
-
-        return view('admin.reports.profits', compact('profits'));
+        $profits[] = [
+            'month' => $monthName,
+            'profit' => $profit,
+        ];
     }
+
+    // Top products profit - Last 1 Month
+    $monthlyTopProducts = DB::table('sale_items')
+        ->join('products', 'sale_items.product_id', '=', 'products.id')
+        ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
+        ->where('sale_items.created_at', '>=', Carbon::now()->subMonth())
+        ->groupBy('products.name')
+        ->orderByDesc('profit')
+        ->take(10)
+        ->get();
+
+    // Top products profit - Last 1 Week
+    $weeklyTopProducts = DB::table('sale_items')
+        ->join('products', 'sale_items.product_id', '=', 'products.id')
+        ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
+        ->where('sale_items.created_at', '>=', Carbon::now()->subWeek())
+        ->groupBy('products.name')
+        ->orderByDesc('profit')
+        ->take(10)
+        ->get();
+
+    // Top products profit - Yesterday
+    $yesterdayTopProducts = DB::table('sale_items')
+        ->join('products', 'sale_items.product_id', '=', 'products.id')
+        ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
+        ->whereDate('sale_items.created_at', Carbon::yesterday())
+        ->groupBy('products.name')
+        ->orderByDesc('profit')
+        ->take(10)
+        ->get();
+
+    return view('admin.reports.profits', compact(
+        'profits',
+        'monthlyTopProducts',
+        'weeklyTopProducts',
+        'yesterdayTopProducts'
+    ));
+}
+
 
     public function today()
-    {
-        $today = Carbon::today();
+{
+    $today = Carbon::today();
 
-        $sales = SaleItem::with('product', 'sale')
-                    ->whereDate('created_at', $today)
-                    ->get();
+    $sales = SaleItem::with('product', 'sale')
+                ->whereDate('created_at', $today)
+                ->get();
 
-        $purchases = Purchase::with('product')
-                    ->whereDate('created_at', $today)
-                    ->get();
+    $purchases = Purchase::with('product')
+                ->whereDate('created_at', $today)
+                ->get();
 
-        return view('admin.reports.today', compact('sales', 'purchases'));
-    }
+    // Calculate totals
+    $totalSales = $sales->sum(function ($sale) {
+        return $sale->quantity * $sale->unit_price;
+    });
+
+    $totalPurchases = $purchases->sum(function ($purchase) {
+        return $purchase->quantity * $purchase->unit_cost;
+    });
+
+    $profit = $totalSales - $totalPurchases;
+
+    return view('admin.reports.today', compact(
+        'sales',
+        'purchases',
+        'totalSales',
+        'totalPurchases',
+        'profit'
+    ));
+}
+
 
     public function generate(Request $request)
     {
