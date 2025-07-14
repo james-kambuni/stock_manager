@@ -19,67 +19,87 @@
             left: 0;
             top: 0;
             width: 100%;
+            font-size: 10px;
             padding: 10px;
-            font-size: 0.75rem;
         }
 
         #invoice table {
-            font-size: 0.65rem;
+            font-size: 9px;
+            margin-bottom: 0;
+        }
+
+        #invoice table th,
+        #invoice table td {
+            padding: 2px 4px;
         }
 
         .no-print {
             display: none !important;
         }
+
+        #invoice .invoice-body {
+            page-break-inside: avoid;
+        }
     }
 
     #invoice {
         background: white;
-        padding: 30px;
+        padding: 10px;
         border: 1px solid #ddd;
         margin-bottom: 20px;
+        font-size: 11px;
         min-height: 100vh;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
     }
 
-    #invoice table, #invoice table th, #invoice table td {
-        font-size: 0.75rem;
-        padding: 0.35rem;
+    #invoice table th,
+    #invoice table td {
+        font-size: 10px;
+        padding: 3px 5px;
+        vertical-align: middle;
     }
 
     #invoice-header img {
-        max-width: 100px;
-        margin-bottom: 10px;
+        max-width: 90px;
     }
 
     #invoice-header h3 {
-        font-size: 1rem;
+        font-size: 14px;
         margin: 2px 0;
     }
 
     #invoice-header p {
-        font-size: 0.75rem;
-        margin: 2px 0;
+        font-size: 10px;
+        margin: 0;
     }
 
-    #bank-details, #terms {
-        font-size: 0.65rem;
-        margin-top: 15px;
-        line-height: 1.2;
-    }
-
-    #bank-details h6, #terms h6 {
-        font-size: 0.7rem;
-        margin-bottom: 4px;
+    #bank-details,
+    #terms {
+        font-size: 9px;
         margin-top: 10px;
     }
 
-    #bank-details p, #terms p {
-        margin: 0;
+    #bank-details h6,
+    #terms h6 {
+        font-size: 10px;
+        margin-bottom: 5px;
+    }
+
+    .form-control-sm {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+
+    .table-bordered td, 
+    .table-bordered th {
+        border: 1px solid #dee2e6 !important;
+    }
+
+    .table th, 
+    .table td {
+        white-space: nowrap;
     }
 </style>
+
 @endpush
 
 @section('content')
