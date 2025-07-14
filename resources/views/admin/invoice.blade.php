@@ -126,10 +126,10 @@
         <div class="invoice-body">
             <div id="invoice-header" class="text-center mb-4">
                 <img src="{{ asset('images/junixlogo1.png') }}" alt="App Logo">
-                <h3>Junik Irrigation Suppliers</h3>
+                <h3>Junik Drip Irrigation & consultants</h3>
                 <h3>Festus Building, Mwingi</h3>
-                <h3>Pin: AO12436333276</h3>
-                <p><em>07003698277</em></p>
+                <h3>Pin: A011970484C</h3>
+                <p><em>0758878628</em></p>
             </div>
 
             <div class="row mb-2">
@@ -138,6 +138,7 @@
                     <p><strong>Name:</strong> <span id="customerName">-</span></p>
                     <p><strong>Address:</strong> <span id="customerAddress">-</span></p>
                     <p><strong>Email:</strong> <span id="customerEmail">-</span></p>
+                    <p><strong>Phone:</strong> <span id="customerPhone">-</span></p>
                 </div>
                 <div class="col-6 text-end" style="font-size: 0.75rem;">
                     <h6>Served By</h6>
@@ -166,22 +167,22 @@
             </table>
 
             <div id="bank-details">
-                <h6>Bank Payment Details:</h6>
-                <p>Bank: National Bank of Kenya</p>
-                <p>Account Name: Junik Irrigation Suppliers</p>
-                <p>Account Number: 1234567890</p>
-                <p>Branch: Mwingi</p>
+                <h6>Payment Details:</h6>
+                <p>Paybill:</p>
+                <p>Business NO.: 522533</p>
+                <p>Acc NO.: 7933227</p>
+                <p>Name: JUNK DRIP</p>
             </div>
 
             <div id="terms">
                 <h6>Terms & Conditions:</h6>
                 <p>Payment is due within 30 days from the invoice date. Late payments may be subject to interest charges.</p>
-                <p>Goods sold are non-refundable unless defective.</p>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Customer Modal -->
 <!-- Customer Modal -->
 <div class="modal fade" id="customerModal" tabindex="-1">
     <div class="modal-dialog">
@@ -192,9 +193,22 @@
                     <button class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3"><label class="form-label">Customer Name</label><input type="text" id="inputCustomerName" class="form-control" required></div>
-                    <div class="mb-3"><label class="form-label">Address</label><input type="text" id="inputCustomerAddress" class="form-control" required></div>
-                    <div class="mb-3"><label class="form-label">Email</label><input type="email" id="inputCustomerEmail" class="form-control" required></div>
+                    <div class="mb-3">
+                        <label class="form-label">Customer Name</label>
+                        <input type="text" id="inputCustomerName" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" id="inputCustomerAddress" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" id="inputCustomerPhone" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email (optional)</label>
+                        <input type="email" id="inputCustomerEmail" class="form-control">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -204,6 +218,7 @@
         </div>
     </div>
 </div>
+
 @endsection
 
 @push('scripts')
@@ -265,18 +280,20 @@ document.addEventListener('DOMContentLoaded', function () {
         totalEl.textContent = total.toFixed(2);
     }
 
-    document.getElementById('customerForm').addEventListener('submit', function (e) {
+   document.getElementById('customerForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
     document.getElementById('customerName').textContent = document.getElementById('inputCustomerName').value;
     document.getElementById('customerAddress').textContent = document.getElementById('inputCustomerAddress').value;
-    document.getElementById('customerEmail').textContent = document.getElementById('inputCustomerEmail').value;
+    document.getElementById('customerPhone').textContent = document.getElementById('inputCustomerPhone').value;
+    document.getElementById('customerEmail').textContent = document.getElementById('inputCustomerEmail').value || '-';
 
     // Hide modal safely using Bootstrap instance
     const modalElement = document.getElementById('customerModal');
     const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
     modalInstance.hide();
 });
+
 
 
 
