@@ -164,9 +164,11 @@ document.addEventListener('input', function (e) {
         const originalPrice = parseFloat(priceInput.getAttribute('data-original-price') || 0);
         const currentPrice = parseFloat(priceInput.value);
 
+        if (!priceInput.value) return; // allow blank entry
+
         if (originalPrice && currentPrice < originalPrice * 0.86) {
             alert("You cannot apply more than 14% discount.");
-            priceInput.value = originalPrice.toFixed(2); // Revert back to original
+            priceInput.value = originalPrice.toFixed(2); // Revert to original
         }
     }
 });
