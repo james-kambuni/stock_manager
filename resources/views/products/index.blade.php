@@ -158,20 +158,34 @@ document.addEventListener('change', function (e) {
 });
 
 // Restrict editing price to max 14% discount
-document.addEventListener('input', function (e) {
-    if (e.target.classList.contains('price')) {
-        const priceInput = e.target;
-        const originalPrice = parseFloat(priceInput.getAttribute('data-original-price') || 0);
-        const currentPrice = parseFloat(priceInput.value);
+document.addEventListener('change', function (e) {
+    if (e.target.classList.contains('product-select')) {
+        const selected = e.target.selectedOptions[0];
+        const price = selected.getAttribute('data-price');
+        const parentGroup = e.target.closest('.product-group');
+        const priceInput = parentGroup.querySelector('.price');
 
-        if (!priceInput.value) return; // allow blank entry
-
-        if (originalPrice && currentPrice < originalPrice * 0.86) {
-            alert("You cannot apply more than 14% discount.");
-            priceInput.value = originalPrice.toFixed(2); // Revert to original
-        }
+        priceInput.value = price || '';
+        priceInput.setAttribute('data-original-price', price || '0');
+        
     }
 });
+document.addEventListener('blur', function (e) {
+    if (e.target.classList.contains('price')) {
+        const input = e.target;
+        const enteredPrice = parseFloat(input.value);
+        const originalPrice = parseFloat(input.getAttribute('data-original-price') || 0);
+
+        if (!input.value || isNaN(enteredPrice)) return; // allow blank or invalid values temporarily
+
+        const maxDiscountedPrice = originalPrice * 0.86;
+
+        if (enteredPrice < maxDiscountedPrice) {
+            alert('Discount cannot exceed 14% of the selling price.');
+            input.value = originalPrice.toFixed(2); // reset to original price
+        }
+    }
+}, true);
 </script>
 
             </div>
