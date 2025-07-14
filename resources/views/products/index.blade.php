@@ -119,59 +119,59 @@
                 </form>
 
                 <script>
-                    let productIndex = 1;
+let productIndex = 1;
 
-                    document.getElementById('addProductRow').addEventListener('click', function () {
-                        const container = document.getElementById('productSalesList');
-                        const original = container.querySelector('.product-group');
-                        const clone = original.cloneNode(true);
+document.getElementById('addProductRow').addEventListener('click', function () {
+    const container = document.getElementById('productSalesList');
+    const original = container.querySelector('.product-group');
+    const clone = original.cloneNode(true);
 
-                        clone.querySelectorAll('select, input').forEach(el => {
-                            const name = el.getAttribute('name');
-                            if (name) {
-                                el.setAttribute('name', name.replace(/\[\d+\]/, `[${productIndex}]`));
-                                el.value = '';
-                            }
-                        });
+    clone.querySelectorAll('select, input').forEach(el => {
+        const name = el.getAttribute('name');
+        if (name) {
+            el.setAttribute('name', name.replace(/\[\d+\]/, `[${productIndex}]`));
+            el.value = '';
+        }
+    });
 
-                        clone.querySelector('.remove-row').classList.remove('d-none');
-                        container.appendChild(clone);
-                        productIndex++;
-                    });
+    clone.querySelector('.remove-row').classList.remove('d-none');
+    container.appendChild(clone);
+    productIndex++;
+});
 
-                    document.addEventListener('click', function (e) {
-                        if (e.target.classList.contains('remove-row')) {
-                            e.target.closest('.product-group').remove();
-                        }
-                    });
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('remove-row')) {
+        e.target.closest('.product-group').remove();
+    }
+});
 
-                    // Set default price and original price
-                    document.addEventListener('change', function (e) {
-                        if (e.target.classList.contains('product-select')) {
-                            const selected = e.target.selectedOptions[0];
-                            const price = parseFloat(selected.dataset.price);
-                            const parentGroup = e.target.closest('.product-group');
-                            const priceInput = parentGroup.querySelector('.price');
+document.addEventListener('change', function (e) {
+    if (e.target.classList.contains('product-select')) {
+        const selected = e.target.selectedOptions[0];
+        const price = parseFloat(selected.dataset.price);
+        const parentGroup = e.target.closest('.product-group');
+        const priceInput = parentGroup.querySelector('.price');
 
-                            priceInput.value = price || '';
-                            priceInput.setAttribute('data-original-price', price || 0);
-                        }
-                    });
+        priceInput.value = price.toFixed(2); // Set price from selected product
+        priceInput.setAttribute('data-original-price', price); // Save original price
+    }
+});
 
-                    // Enforce price not being reduced by more than 14%
-                    document.addEventListener('input', function (e) {
-                        if (e.target.classList.contains('price')) {
-                            const priceInput = e.target;
-                            const originalPrice = parseFloat(priceInput.getAttribute('data-original-price') || 0);
-                            const currentPrice = parseFloat(priceInput.value);
+// Restrict editing price to max 14% discount
+document.addEventListener('input', function (e) {
+    if (e.target.classList.contains('price')) {
+        const priceInput = e.target;
+        const originalPrice = parseFloat(priceInput.getAttribute('data-original-price') || 0);
+        const currentPrice = parseFloat(priceInput.value);
 
-                            if (originalPrice > 0 && currentPrice < originalPrice * 0.86) {
-                                alert("Price cannot be reduced by more than 14% of the original selling price.");
-                                priceInput.value = originalPrice.toFixed(2);
-                            }
-                        }
-                    });
-                </script>
+        if (originalPrice && currentPrice < originalPrice * 0.86) {
+            alert("You cannot apply more than 14% discount.");
+            priceInput.value = originalPrice.toFixed(2); // Revert back to original
+        }
+    }
+});
+</script>
+
             </div>
         </div>
     </div>
