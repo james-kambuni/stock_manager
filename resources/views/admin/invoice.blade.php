@@ -9,6 +9,17 @@
         body * {
             visibility: hidden;
         }
+        #invoice .row p,
+        #invoice .row h6,
+        #bank-details p,
+        #bank-details h6,
+        #terms p,
+        #terms h6 {
+            margin: 1px 0 !important;
+            line-height: 1.1 !important;
+            font-size: 9px !important;
+        }
+
 
         #invoice, #invoice * {
             visibility: visible;
