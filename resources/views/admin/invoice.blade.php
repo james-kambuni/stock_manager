@@ -259,26 +259,46 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function updateInvoiceTable() {
-        invoiceItemsEl.innerHTML = '';
-        let subtotal = 0;
-        items.forEach(item => {
-            const itemSubtotal = item.qty * item.price;
-            subtotal += itemSubtotal;
-            invoiceItemsEl.innerHTML += `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>${item.qty}</td>
-                    <td>${item.price.toFixed(2)}</td>
-                    <td>${itemSubtotal.toFixed(2)}</td>
-                </tr>
-            `;
+    invoiceItemsEl.innerHTML = '';
+    let subtotal = 0;
+
+    items.forEach((item, index) => {
+        const itemSubtotal = item.qty * item.price;
+        subtotal += itemSubtotal;
+
+        invoiceItemsEl.innerHTML += `
+            <tr>
+                <td>${item.name}</td>
+                <td>${item.qty}</td>
+                <td>
+                    <input type="number" class="form-control form-control-sm unit-price-input" 
+                           data-index="${index}" value="${item.price.toFixed(2)}" />
+                </td>
+                <td class="item-subtotal">${itemSubtotal.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+
+    const vat = subtotal * 0.16;
+    const total = subtotal + vat;
+    subtotalEl.textContent = subtotal.toFixed(2);
+    vatEl.textContent = vat.toFixed(2);
+    totalEl.textContent = total.toFixed(2);
+
+    // Attach change event listeners to the editable price inputs
+    document.querySelectorAll('.unit-price-input').forEach(input => {
+        input.addEventListener('change', function () {
+            const index = parseInt(this.dataset.index);
+            const newPrice = parseFloat(this.value);
+
+            if (!isNaN(newPrice) && newPrice >= 0) {
+                items[index].price = newPrice;
+                updateInvoiceTable(); // re-render and recalculate
+            }
         });
-        const vat = subtotal * 0.16;
-        const total = subtotal + vat;
-        subtotalEl.textContent = subtotal.toFixed(2);
-        vatEl.textContent = vat.toFixed(2);
-        totalEl.textContent = total.toFixed(2);
-    }
+    });
+}
+
 
    document.getElementById('customerForm').addEventListener('submit', function (e) {
     e.preventDefault();

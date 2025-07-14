@@ -89,8 +89,8 @@
                     @csrf
                     <div id="productSalesList">
                         <div class="product-group mb-3 border p-2 rounded">
-                            <div class="row">
-                                <div class="col-md-6">
+                            <div class="row g-2">
+                                <div class="col-md-5">
                                     <label>Product</label>
                                     <select name="products[0][product_id]" class="form-select product-select" required>
                                         <option value="">Select a product</option>
@@ -102,12 +102,12 @@
                                     </select>
                                 </div>
                                 <div class="col-md-3">
-                                    <label>Price</label>
-                                    <input type="number" step="0.01" class="form-control price" name="products[0][unit_price]" readonly required>
+                                    <label>Price (Editable)</label>
+                                    <input type="number" step="0.01" class="form-control price" name="products[0][unit_price]" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label>Quantity</label>
-                                    <input type="number" class="form-control" name="products[0][quantity]" autocomplete="off" required>
+                                    <input type="number" class="form-control" name="products[0][quantity]" required>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-danger btn-sm mt-2 remove-row d-none">Remove</button>
@@ -145,12 +145,30 @@
                         }
                     });
 
+                    // Set default price and original price
                     document.addEventListener('change', function (e) {
                         if (e.target.classList.contains('product-select')) {
                             const selected = e.target.selectedOptions[0];
-                            const price = selected.getAttribute('data-price');
+                            const price = parseFloat(selected.dataset.price);
                             const parentGroup = e.target.closest('.product-group');
-                            parentGroup.querySelector('.price').value = price || '';
+                            const priceInput = parentGroup.querySelector('.price');
+
+                            priceInput.value = price || '';
+                            priceInput.setAttribute('data-original-price', price || 0);
+                        }
+                    });
+
+                    // Enforce price not being reduced by more than 14%
+                    document.addEventListener('input', function (e) {
+                        if (e.target.classList.contains('price')) {
+                            const priceInput = e.target;
+                            const originalPrice = parseFloat(priceInput.getAttribute('data-original-price') || 0);
+                            const currentPrice = parseFloat(priceInput.value);
+
+                            if (originalPrice > 0 && currentPrice < originalPrice * 0.86) {
+                                alert("Price cannot be reduced by more than 14% of the original selling price.");
+                                priceInput.value = originalPrice.toFixed(2);
+                            }
                         }
                     });
                 </script>
