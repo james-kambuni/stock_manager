@@ -3,233 +3,127 @@
 @section('title', 'Manage Products')
 
 @section('content')
-<div class="row">
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+@include('partials.flash-messages')
+<style>
+    /* Improve base tab appearance */
+    .nav-tabs .nav-link {
+        color: #495057;
+        transition: color 0.2s, background-color 0.2s;
+    }
 
-    @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
+    /* Hover effect */
+    .nav-tabs .nav-link:hover {
+        color: #0d6efd; /* Bootstrap primary color */
+        background-color: #f8f9fa;
+        border-color: #dee2e6 #dee2e6 #f8f9fa;
+        font-weight: 500;
+        text-decoration: underline;
+        text color: red;
+    }
 
-    <!-- Record Purchases -->
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white">
-                Record Purchases
-            </div>
-            <div class="card-body">
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+    /* Active tab styling for better contrast */
+    .nav-tabs .nav-link.active {
+        font-weight: 600;
+        background-color: #ffffff;
+        border-color: #dee2e6 #dee2e6 #fff;
+    }
+    /* Custom tab hover effect */
+    .nav-tabs .nav-link {
+        transition: background-color 0.3s ease, color 0.3s ease;
+        border-radius: 0.375rem;
+        font-weight: 500;
+    }
 
-                <form method="POST" action="{{ route('products.purchase') }}">
-                    @csrf
-                    <div class="mb-3">
-                        <label for="purchaseProduct" class="form-label">Product</label>
-                        <select name="product_id" id="purchaseProduct" class="form-select" required>
-                            <option value="">Select a product</option>
-                            @foreach($products as $product)
-                                <option value="{{ $product->id }}">{{ $product->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+    .nav-tabs .nav-link:hover {
+        background-color: #f0f0f0;
+        color: #0d6efd;
+    }
 
-                    <div class="mb-3">
-                        <label class="form-label">Quantity Purchased</label>
-                        <input type="number" name="quantity" class="form-control" required>
-                    </div>
+    .nav-tabs .nav-link.active {
+        background-color: #0d6efd;
+        color: #fff;
+        border-color: #dee2e6 #dee2e6 #fff;
+    }
 
-                    <div class="mb-3">
-                        <label class="form-label">Unit Cost Price (Ksh)</label>
-                        <input type="number" step="0.01" class="form-control" id="purchaseUnitCost" name="cost_price" required>
-                    </div>
+    .nav-tabs .nav-link i {
+        margin-right: 5px;
+    }
+    .nav-tabs {
+        justify-content: center; /* Center tabs even on small screens */
+        flex-wrap: wrap;
+    }
 
-                    <button type="submit" class="btn btn-info">Record Purchase</button>
-                </form>
+    .nav-tabs .nav-link {
+        color: #343a40; /* default text color */
+        transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    }
 
-                <script>
-                    const products = @json($products);
-                    document.getElementById('purchaseProduct').addEventListener('change', function () {
-                        const selectedId = this.value;
-                        const product = products.find(p => p.id == selectedId);
-                        document.getElementById('purchaseUnitCost').value = product ? product.cost_price : '';
-                    });
-                </script>
-            </div>
-        </div>
+    .nav-tabs .nav-link:hover {
+        color: red !important;  /* Hover text turns red */
+        background-color: #f8f9fa;
+        text-decoration: underline;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #fff;
+        background-color: #0d6efd;
+        border-color: #dee2e6 #dee2e6 #fff;
+    }
+</style>
+
+<!-- Tabs Navigation -->
+<!-- Tabs Navigation -->
+<div class="d-flex justify-content-center overflow-auto mb-4">
+    <ul class="nav nav-tabs flex-nowrap" id="stockTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="purchase-tab" data-bs-toggle="tab" data-bs-target="#purchase" type="button" role="tab">
+                <i class="bi bi-box-arrow-in-down"></i> Purchases
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab">
+                <i class="bi bi-cash-coin"></i> Sales
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab">
+                <i class="bi bi-wallet2"></i> Expenses
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                <i class="bi bi-bar-chart-line"></i> Reports
+            </button>
+        </li>
+    </ul>
+</div>
+
+<!-- Tabs Content -->
+<div class="tab-content" id="stockTabsContent">
+    <!-- Purchases Tab -->
+    <div class="tab-pane fade show active" id="purchase" role="tabpanel" aria-labelledby="purchase-tab">
+        @include('partials.purchase-card')
     </div>
 
-    <!-- Record Sales -->
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header bg-success text-white">
-                Record Sales
-            </div>
-            <div class="card-body">
-                @if ($errors->has('products.*'))
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->get('products.*') as $fieldErrors)
-                                @foreach ($fieldErrors as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+    <!-- Sales Tab -->
+    <div class="tab-pane fade" id="sales" role="tabpanel" aria-labelledby="sales-tab">
+        @include('partials.sale-card')
+    </div>
 
-                <form method="POST" action="{{ route('products.sell.multiple') }}">
-                    @csrf
-                    <div id="productSalesList">
-                        <div class="product-group mb-3 border p-2 rounded">
-                            <div class="row g-2">
-                                <div class="col-md-5">
-                                    <label>Product</label>
-                                    <select name="products[0][product_id]" class="form-select product-select" required>
-                                        <option value="">Select a product</option>
-                                        @foreach($products as $product)
-                                            <option value="{{ $product->id }}" data-price="{{ $product->selling_price }}">
-                                                {{ $product->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label>Price (Editable)</label>
-                                    <input type="number" step="0.01" class="form-control price" name="products[0][unit_price]" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label>Quantity</label>
-                                    <input type="number" class="form-control" name="products[0][quantity]" required>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-danger btn-sm mt-2 remove-row d-none">Remove</button>
-                        </div>
-                    </div>
-
-                    <button type="button" id="addProductRow" class="btn btn-sm btn-secondary my-2">Add Another Product</button>
-                    <button type="submit" class="btn btn-success">Submit Sale & Print</button>
-                </form>
-
-                <script>
-let productIndex = 1;
-
-document.getElementById('addProductRow').addEventListener('click', function () {
-    const container = document.getElementById('productSalesList');
-    const original = container.querySelector('.product-group');
-    const clone = original.cloneNode(true);
-
-    clone.querySelectorAll('select, input').forEach(el => {
-        const name = el.getAttribute('name');
-        if (name) {
-            el.setAttribute('name', name.replace(/\[\d+\]/, `[${productIndex}]`));
-            el.value = '';
-        }
-    });
-
-    clone.querySelector('.remove-row').classList.remove('d-none');
-    container.appendChild(clone);
-    productIndex++;
-});
-
-document.addEventListener('click', function (e) {
-    if (e.target.classList.contains('remove-row')) {
-        e.target.closest('.product-group').remove();
-    }
-});
-
-document.addEventListener('change', function (e) {
-    if (e.target.classList.contains('product-select')) {
-        const selected = e.target.selectedOptions[0];
-        const price = parseFloat(selected.dataset.price);
-        const parentGroup = e.target.closest('.product-group');
-        const priceInput = parentGroup.querySelector('.price');
-
-        priceInput.value = price.toFixed(2); // Set price from selected product
-        priceInput.setAttribute('data-original-price', price); // Save original price
-    }
-});
-
-// Restrict editing price to max 14% discount
-document.addEventListener('change', function (e) {
-    if (e.target.classList.contains('product-select')) {
-        const selected = e.target.selectedOptions[0];
-        const price = selected.getAttribute('data-price');
-        const parentGroup = e.target.closest('.product-group');
-        const priceInput = parentGroup.querySelector('.price');
-
-        priceInput.value = price || '';
-        priceInput.setAttribute('data-original-price', price || '0');
-        
-    }
-});
-document.addEventListener('blur', function (e) {
-    if (e.target.classList.contains('price')) {
-        const input = e.target;
-        const enteredPrice = parseFloat(input.value);
-        const originalPrice = parseFloat(input.getAttribute('data-original-price') || 0);
-
-        if (!input.value || isNaN(enteredPrice)) return; // allow blank or invalid values temporarily
-
-        const maxDiscountedPrice = originalPrice * 0.86;
-
-        if (enteredPrice < maxDiscountedPrice) {
-            alert('Discount cannot exceed 14% of the selling price.');
-            input.value = originalPrice.toFixed(2); // reset to original price
-        }
-    }
-}, true);
-</script>
-
-            </div>
+    <!-- Expenses Tab -->
+    <div class="tab-pane fade" id="expenses" role="tabpanel" aria-labelledby="expenses-tab">
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#expenseModal">
+                <i class="bi bi-plus-circle"></i> Record Expense
+            </button>
         </div>
+        @include('partials.expense-modal')
+    </div>
+
+    <!-- Reports Tab -->
+    <div class="tab-pane fade" id="reports" role="tabpanel" aria-labelledby="reports-tab">
+        @include('partials.report-card')
     </div>
 </div>
 
-<!-- Reports Section -->
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-secondary text-white">
-                Reports
-            </div>
-            <div class="card-body">
-                <form method="GET" action="{{ route('user.reports.index') }}">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <label class="form-label">Report Type</label>
-                            <select class="form-select" name="type">
-                                <option value="sales">Sales Report</option>
-                                <option value="purchases">Purchases Report</option>
-                                <option value="inventory">Inventory Report</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Start Date</label>
-                            <input type="date" class="form-control" name="start">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">End Date</label>
-                            <input type="date" class="form-control" name="end">
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button type="submit" class="btn btn-secondary w-100">Generate Report</button>
-                        </div>
-                    </div>
-                </form>
-
-                <div id="reportResults" class="mt-3">
-                    <p>Select report type and date range to view data.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection

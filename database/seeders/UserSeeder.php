@@ -2,34 +2,40 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Models\Tenant;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run()
-{
-    // Admin user
-    User::create([
-    'name' => 'Junik agri-suppliers',
-    'email' => 'junix@gmail.com',
-    'password' => Hash::make('junik123'),
-    'role' => 'admin',
-]);
+    {
+        // ✅ Fetch existing Junik Tenant (don't create again)
+        $tenant = Tenant::where('name', 'Junik Tenant')->first();
 
+        // ❌ If not found, log a warning and skip user creation
+        if (!$tenant) {
+            $this->command->warn('Junik Tenant not found. Skipping user creation.');
+            return;
+        }
 
-    // Regular user
-    User::create([
-        'name' => 'Normal user',
-        'email' => 'user@example.com',
-        'password' => Hash::make('password'),
-        'is_admin' => false,
-    ]);
-}
+        // Admin user
+        User::create([
+            'name' => 'Junik agri-suppliers',
+            'email' => 'junix@gmail.com',
+            'password' => Hash::make('junik123'),
+            'role' => 'admin',
+            'tenant_id' => $tenant->id,
+        ]);
+
+        // Regular user
+        User::create([
+            'name' => 'Junik staff user',
+            'email' => 'user@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'user',
+            'tenant_id' => $tenant->id,
+        ]);
+    }
 }

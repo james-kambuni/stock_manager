@@ -73,22 +73,22 @@
     </div>
     <div class="card mt-4 shadow">
     <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">Profit Summary for {{ now()->format('F j, Y') }}</h5>
+        <h5 class="mb-0">Financial Summary for {{ now()->format('F j, Y') }}</h5>
     </div>
     <div class="card-body">
         <div class="row text-center">
             <div class="col-md-4 mb-3">
-                <h6>Total Sales</h6>
-                <p class="text-success fw-bold">Ksh {{ number_format($totalSales, 2) }}</p>
+                <h6>Gross Profit</h6>
+                <p class="text-success fw-bold">Ksh {{ number_format($grossProfit, 2) }}</p>
             </div>
             <div class="col-md-4 mb-3">
-                <h6>Total Purchases</h6>
-                <p class="text-danger fw-bold">Ksh {{ number_format($totalPurchases, 2) }}</p>
+                <h6>Total Expenses</h6>
+                <p class="text-danger fw-bold">Ksh {{ number_format($totalExpenses, 2) }}</p>
             </div>
             <div class="col-md-4 mb-3">
-                <h6>Profit</h6>
-                <p class="fw-bold {{ $profit >= 0 ? 'text-primary' : 'text-danger' }}">
-                    Ksh {{ number_format($profit, 2) }}
+                <h6>Net Profit</h6>
+                <p class="fw-bold {{ $netProfit >= 0 ? 'text-primary' : 'text-danger' }}">
+                    Ksh {{ number_format($netProfit, 2) }}
                 </p>
             </div>
         </div>

@@ -111,6 +111,7 @@
     }
 </style>
 
+
 @endpush
 
 @section('content')
@@ -118,9 +119,15 @@
     <h2 class="mb-4 text-center">Invoice Generation</h2>
 
     <div class="mb-3 no-print text-end">
-        <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#customerModal">👤 Customer Details</button>
-        <button class="btn btn-outline-primary me-2" onclick="window.print()">🖨️ Print Invoice</button>
-        <button class="btn btn-outline-danger" id="downloadPdf">📄 Download PDF</button>
+        <button type="button" class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#customerModal">
+            👤 Customer Details
+        </button>
+        <button type="button" class="btn btn-outline-primary me-2" onclick="window.print()">
+            🖨️ Print Invoice
+        </button>
+        <button type="button" class="btn btn-outline-danger" id="downloadPdf">
+            📄 Download PDF
+        </button>
     </div>
 
     <!-- Product Entry -->
@@ -128,7 +135,7 @@
         <h5>Add Product to Invoice</h5>
         <div class="row g-3 align-items-end">
             <div class="col-md-5">
-                <label class="form-label">Select Product</label>
+                <label for="productSelect" class="form-label">Select Product</label>
                 <select class="form-select" id="productSelect" required>
                     <option value="">Select a product</option>
                     @foreach($products as $product)
@@ -139,15 +146,15 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Quantity</label>
+                <label for="productQty" class="form-label">Quantity</label>
                 <input type="number" id="productQty" class="form-control" required>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Unit Price (Ksh)</label>
+                <label for="productPrice" class="form-label">Unit Price (Ksh)</label>
                 <input type="number" id="productPrice" class="form-control" readonly>
             </div>
             <div class="col-md-1">
-                <button id="addProduct" class="btn btn-success w-100">Add</button>
+                <button type="button" id="addProduct" class="btn btn-success w-100">Add</button>
             </div>
         </div>
     </div>
@@ -156,8 +163,15 @@
     <div id="invoice">
         <div class="invoice-body">
             <div id="invoice-header" class="text-center mb-4">
-                <img src="{{ asset('images/junixlogo1.png') }}" alt="App Logo">
-                <h3>Junik Drip Irrigation & consultants</h3>
+                @php
+                    $tenant = auth()->user()->tenant;
+                @endphp
+
+                @if ($tenant && $tenant->logo)
+                    <img src="{{ asset('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }} Logo" style="max-height: 80px;">
+                @endif
+
+                <h3>Junik Drip Irrigation & Consultants</h3>
                 <h3>Festus Building, Mwingi</h3>
                 <h3>Pin: A011970484C</h3>
                 <p><em>0758878628</em></p>
@@ -177,7 +191,6 @@
                     <p><strong>Date:</strong> <span id="invoiceDate">{{ now()->format('d M Y') }}</span></p>
                     <p><strong>Invoice #:</strong> <span id="invoiceNumber">{{ $invoiceNumber }}</span></p>
                 </div>
-
             </div>
 
             <table class="table table-bordered">
@@ -191,17 +204,26 @@
                 </thead>
                 <tbody id="invoiceItems"></tbody>
                 <tfoot>
-                    <tr><th colspan="3" class="text-end">Subtotal</th><th id="subtotalAmount">0.00</th></tr>
-                    <tr><th colspan="3" class="text-end">VAT (16%)</th><th id="vatAmount">0.00</th></tr>
-                    <tr><th colspan="3" class="text-end">Total</th><th id="totalAmount">0.00</th></tr>
+                    <tr>
+                        <th colspan="3" class="text-end">Subtotal</th>
+                        <th id="subtotalAmount">0.00</th>
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="text-end">VAT (16%)</th>
+                        <th id="vatAmount">0.00</th>
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="text-end">Total</th>
+                        <th id="totalAmount">0.00</th>
+                    </tr>
                 </tfoot>
             </table>
 
             <div id="bank-details">
                 <h6>Payment Details:</h6>
-                <p>Paybill:</p>
-                <p>Business NO.: 522533</p>
-                <p>Acc NO.: 7933227</p>
+                <p>Paybill (KCB)</p>
+                <p>Business NO: 522533</p>
+                <p>Acc NO: 7933227</p>
                 <p>Name: JUNK DRIP</p>
             </div>
 
@@ -214,43 +236,42 @@
 </div>
 
 <!-- Customer Modal -->
-<!-- Customer Modal -->
 <div class="modal fade" id="customerModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="customerForm">
                 <div class="modal-header">
                     <h5 class="modal-title">Enter Customer Details</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Customer Name</label>
+                        <label for="inputCustomerName" class="form-label">Customer Name</label>
                         <input type="text" id="inputCustomerName" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Address</label>
+                        <label for="inputCustomerAddress" class="form-label">Address</label>
                         <input type="text" id="inputCustomerAddress" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Phone Number</label>
+                        <label for="inputCustomerPhone" class="form-label">Phone Number</label>
                         <input type="text" id="inputCustomerPhone" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email (optional)</label>
+                        <label for="inputCustomerEmail" class="form-label">Email (optional)</label>
                         <input type="email" id="inputCustomerEmail" class="form-control">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button class="btn btn-primary" type="submit">Save Details</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Details</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
 @endsection
+
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -364,6 +385,104 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 });
+function saveInvoiceToDB() {
+    const invoiceData = {
+        invoice_number: document.getElementById('invoiceNumber').textContent.trim(),
+        customer_name: document.getElementById('customerName').textContent.trim(),
+        customer_address: document.getElementById('customerAddress').textContent.trim(),
+        customer_phone: document.getElementById('customerPhone').textContent.trim(),
+        customer_email: document.getElementById('customerEmail').textContent.trim(),
+        served_by: document.getElementById('servedBy').textContent.trim(),
+        subtotal: parseFloat(document.getElementById('subtotalAmount').textContent),
+        vat: parseFloat(document.getElementById('vatAmount').textContent),
+        total: parseFloat(document.getElementById('totalAmount').textContent),
+        items: items
+    };
+
+    fetch('{{ route("admin.invoices.store") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(invoiceData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Invoice saved successfully!');
+        } else {
+            alert('Error saving invoice');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving invoice');
+    });
+}
+
 </script>
+<script>
+document.getElementById('submit-invoice').addEventListener('click', function () {
+    const items = [];
+    let subtotal = 0;
+
+    const rows = document.querySelectorAll('#invoice-items tbody tr');
+    rows.forEach(row => {
+        const name = row.querySelector('.product-name').value;
+        const qty = parseInt(row.querySelector('.product-qty').value);
+        const price = parseFloat(row.querySelector('.product-price').value);
+        const itemSubtotal = qty * price;
+        subtotal += itemSubtotal;
+
+        items.push({
+            name: name,
+            qty: qty,
+            price: price
+        });
+    });
+
+    const vat = subtotal * 0.16;
+    const total = subtotal + vat;
+
+    const data = {
+        invoice_number: 'INV-' + Date.now(),
+        customer_name: document.getElementById('customer_name').value,
+        customer_address: document.getElementById('customer_address').value,
+        customer_phone: document.getElementById('customer_phone').value,
+        customer_email: document.getElementById('customer_email').value,
+        served_by: document.getElementById('served_by').value,
+        subtotal: subtotal.toFixed(2),
+        vat: vat.toFixed(2),
+        total: total.toFixed(2),
+        items: items
+    };
+
+    fetch("{{ route('admin.invoices.store') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(res => {
+        if (res.success) {
+            alert('Invoice saved successfully! Invoice ID: ' + res.invoice_id);
+
+            // Trigger download or print
+            window.open(`/admin/invoice/${res.invoice_id}/print`, '_blank');
+        } else {
+            alert('Something went wrong while saving the invoice.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Failed to submit invoice.');
+    });
+});
+</script>
+
 
 @endpush

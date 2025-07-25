@@ -11,8 +11,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
-    })
+    $middleware->alias([
+        'auth'       => \Illuminate\Auth\Middleware\Authenticate::class,
+        'verified'   => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'tenant'     => \App\Http\Middleware\EnsureUserBelongsToTenant::class,
+        'admin'      => \App\Http\Middleware\IsTenantAdmin::class,
+        'superadmin' => \App\Http\Middleware\IsMasterAdmin::class,
+    ]);
+})
+
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

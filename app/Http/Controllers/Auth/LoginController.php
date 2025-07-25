@@ -14,7 +14,7 @@ class LoginController extends Controller
         return view('auth.login'); // Make sure this Blade view exists
     }
 
-    // Handle login request
+    // Handle login
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -22,9 +22,43 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate(); // Prevent session fixation
-            return redirect()->intended('/dashboard'); // Or your desired redirect
+        if ($user->is_admin) {
+    // Superadmin
+            return redirect()->intended('/master/dashboard');
+        }
+
+        if ($user->role === 'tenantadmin') {
+            return redirect()->intended('/admin/dashboard');
+        }
+
+        return redirect()->intended('/dashboard');
+
+
+            // Check if user is deactivated
+            if (!$user->is_active) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Your account has been deactivated.',
+                ]);
+            }
+
+            // Check if user's tenant is paused
+            if ($user->tenant && $user->tenant->is_active === 0) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Your tenant account is paused. Please contact support.',
+                ]);
+            }
+
+            // Route based on role flags or values
+            if ($user->role === 'superadmin') {
+                return redirect()->intended('/master/dashboard');
+            } elseif ($user->role === 'tenant_admin') {
+                return redirect()->intended('/admin/dashboard');
+            }
+
+            // Default user route
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
@@ -43,4 +77,3 @@ class LoginController extends Controller
         return redirect('/login');
     }
 }
-

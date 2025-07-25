@@ -9,23 +9,40 @@ use App\Models\Sale;
 use App\Models\Purchase;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $productCount = Product::count();
+        $tenantId = auth()->user()->tenant_id;
 
-        // ✅ Correct: Get total quantity from sale_items
-        $salesToday = DB::table('sale_items')
-                        ->whereDate('created_at', today())
-                        ->sum('quantity');
+        $productCount = Product::where('tenant_id', $tenantId)->count();
+        $userCount = User::where('tenant_id', $tenantId)->count();
 
-        $purchasesToday = Purchase::whereDate('created_at', today())->sum('quantity');
+        $today = Carbon::today();
 
-        $userCount = User::count();
+        // Get today's sales
+        $salesToday = Sale::where('tenant_id', $tenantId)
+            ->whereDate('sale_date', $today)
+            ->get();
 
-        // Profits for last 4 months
+        $salesCount = $salesToday->count();
+        $salesTotal = $salesToday->sum('total');
+
+        // Get today's purchases
+        $purchasesToday = Purchase::where('tenant_id', $tenantId)
+            ->whereDate('created_at', $today)
+            ->get();
+
+        $purchasesCount = $purchasesToday->count();
+
+        // Calculate total from unit_cost * quantity
+        $purchasesTotal = $purchasesToday->sum(function ($purchase) {
+            return $purchase->unit_cost * $purchase->quantity;
+        });
+
+        // Monthly profits (last 4 months)
         $months = [];
         $profits = [];
 
@@ -33,15 +50,17 @@ class DashboardController extends Controller
             $month = now()->subMonths($i);
             $label = $month->format('M');
 
-            // ✅ Correct: Use sale_items table for sales totals
             $totalSales = DB::table('sale_items')
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->sum(DB::raw('unit_price * quantity'));
+                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->whereMonth('sale_items.created_at', $month->month)
+                ->whereYear('sale_items.created_at', $month->year)
+                ->where('sales.tenant_id', $tenantId)
+                ->sum(DB::raw('sale_items.unit_price * sale_items.quantity'));
 
             $totalPurchases = DB::table('purchases')
                 ->whereMonth('created_at', $month->month)
                 ->whereYear('created_at', $month->year)
+                ->where('tenant_id', $tenantId)
                 ->sum(DB::raw('unit_cost * quantity'));
 
             $months[] = $label;
@@ -50,8 +69,10 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'productCount',
-            'salesToday',
-            'purchasesToday',
+            'salesCount',
+            'salesTotal',
+            'purchasesCount',
+            'purchasesTotal',
             'userCount',
             'months',
             'profits'

@@ -1,6 +1,7 @@
 <?php
-// app/Models/SaleItem.php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,18 +12,31 @@ class SaleItem extends Model
         'product_id',
         'quantity',
         'unit_price',
-        'unit_cost',  
+        'unit_cost',
         'total',
+        'previous_stock',
     ];
 
-    public function sale()
-{
-    return $this->belongsTo(Sale::class);
-}
+    protected static function booted()
+    {
+        // Automatically set previous_stock from product stock at time of sale
+        static::creating(function ($item) {
+            if ($item->product_id) {
+                $product = Product::find($item->product_id);
+                if ($product) {
+                    $item->previous_stock = $product->stock;
+                }
+            }
+        });
+    }
 
-public function product()
-{
-    return $this->belongsTo(Product::class);
-}
+    public function sale(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class);
+    }
 
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
 }
