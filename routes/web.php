@@ -45,7 +45,7 @@ Route::prefix('master')->middleware(['auth', 'admin'])->name('master.')->group(f
 });
 
 // Master Tenant Routes
-Route::prefix('master/tenants')->middleware(['auth', 'admin'])->name('master.tenant.')->group(function () {
+Route::prefix('master/tenants')->middleware(['auth', ])->name('master.tenant.')->group(function () {
     Route::get('/tenants', [TenantController::class, 'index'])->name('index');
     Route::get('/create', [TenantController::class, 'create'])->name('create');
     Route::post('/', [TenantController::class, 'store'])->name('store'); 
