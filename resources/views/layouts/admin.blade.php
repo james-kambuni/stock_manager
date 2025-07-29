@@ -11,53 +11,155 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            margin: 0;
-        }
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+        transition: background 0.3s, color 0.3s;
+    }
 
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 220px;
+        background-color: #2c3e50;
+        color: #fff;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar a {
+        color: #fff;
+        padding: 12px 20px;
+        display: block;
+        text-decoration: none;
+    }
+
+    .sidebar a:hover,
+    .sidebar .active {
+        background-color: #3498db;
+    }
+
+    .main-content {
+        flex: 1;
+        margin-left: 220px;
+        padding: 20px;
+        background: rgba(59, 130, 246, 0.10);
+        transition: margin-left 0.3s;
+    }
+
+    footer {
+        margin-left: 220px;
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: center;
+        border-top: 1px solid #ddd;
+    }
+
+    /* Sidebar toggle button (hidden on large screens) */
+    .menu-toggle {
+        display: none;
+    }
+
+    /* Dark mode */
+    .dark-mode {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+    }
+
+    .dark-mode .sidebar {
+        background-color: #111;
+    }
+
+    .dark-mode footer {
+        background-color: #333;
+        color: #ccc;
+    }
+
+    .toggle-container {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+    }
+
+    .toggle-container button {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #fff;
+    }
+
+    .dark-mode .toggle-container button {
+        color: #f1f1f1;
+    }
+
+    /* Responsive styles */
+    @media (max-width: 768px) {
         .sidebar {
-            width: 220px;
-            background-color: #566573;
-            color: #fff;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
+            transform: translateX(-100%);
         }
 
-        .sidebar a {
-            color: #fff;
-            padding: 12px;
-            display: block;
-            text-decoration: none;
+        .sidebar.show {
+            transform: translateX(0);
         }
 
-        .sidebar a:hover, .sidebar .active {
-            background-color: #85c1e9;
-        }
-
-        .main-content {
-            margin-left: 220px;
-            flex: 1;
-            padding: 20px;
-            background: rgba(59, 130, 246, 0.10);
-        }
-
+        .main-content,
         footer {
-            margin-left: 220px;
-            background: #f8f9fa;
+            margin-left: 0;
         }
-    </style>
+
+        .menu-toggle {
+            display: block;
+            position: fixed;
+            top: 10px;
+            left: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            z-index: 1001;
+            color: #000;
+        }
+
+        .dark-mode .menu-toggle {
+            color: #fff;
+        }
+    }
+</style>
+
+
 
     @stack('styles')
 </head>
 <body>
 
+<!-- Sidebar Toggle Button -->
+<button class="menu-toggle d-md-none" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
+
 <!-- Sidebar -->
-<div class="sidebar">
-    <h4 class="text-center py-3 border-bottom">Admin Panel</h4>
+<div class="sidebar" id="sidebar">
+    <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom">
+        <h4 class="m-0">Admin Panel</h4>
+        <div class="toggle-container">
+            <button onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                <i class="fas fa-adjust"></i>
+            </button>
+        </div>
+    </div>
 
     <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
         <i class="fas fa-tachometer-alt"></i> Dashboard
@@ -72,7 +174,7 @@
     </a>
 
     <a href="{{ route('admin.transactions.create') }}" class="{{ request()->routeIs('admin.transactions.create') ? 'active' : '' }}">
-        <i class="fas fa-exchange-alt"></i> Record Transaction
+        <i class="fas fa-exchange-alt"></i> Record S & P
     </a>
 
     <a href="{{ route('admin.stock-reconciliation.index') }}" class="{{ request()->routeIs('admin.stock-reconciliation.index') ? 'active' : '' }}">
@@ -119,19 +221,77 @@
     </form>
 </div>
 
-<!-- Main Content -->
-<div class="main-content">
-    <h2>@yield('title')</h2>
-    <hr>
-    @yield('content')
+<div class="wrapper">
+    <!-- Main Content -->
+    <div class="main-content">
+        <h2>@yield('title')</h2>
+        <hr>
+        @yield('content')
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 bg-light border-top">
+        @yield('footer', '© ' . date('Y') . ' J-Solutions Ltd. All rights reserved.')
+    </footer>
 </div>
 
-<!-- Footer -->
-<footer class="text-center mt-5 py-3 bg-light border-top">
-    @yield('footer', '© ' . date('Y') . ' J-Solutions Ltd. All rights reserved.')
-</footer>
-
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('show');
+    }
+
+    function toggleDarkMode() {
+        const body = document.body;
+        body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'on' : 'off');
+    }
+
+    // On load, check localStorage for theme
+    document.addEventListener("DOMContentLoaded", function () {
+        if (localStorage.getItem('darkMode') === 'on') {
+            document.body.classList.add('dark-mode');
+        }
+    });
+</script>
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('show');
+    }
+
+    function toggleDarkMode() {
+        const body = document.body;
+        body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'on' : 'off');
+    }
+
+    // On load, check localStorage for theme
+    document.addEventListener("DOMContentLoaded", function () {
+        if (localStorage.getItem('darkMode') === 'on') {
+            document.body.classList.add('dark-mode');
+        }
+    });
+
+    // Hide sidebar when clicking outside on small screens
+    document.addEventListener('click', function (event) {
+        const sidebar = document.getElementById('sidebar');
+        const toggleButton = document.querySelector('.menu-toggle');
+
+        // Only apply on small screens
+        if (window.innerWidth <= 768) {
+            const isClickInsideSidebar = sidebar.contains(event.target);
+            const isClickOnToggle = toggleButton.contains(event.target);
+
+            if (!isClickInsideSidebar && !isClickOnToggle) {
+                sidebar.classList.remove('show');
+            }
+        }
+    });
+</script>
+
+
 @stack('scripts')
 </body>
 </html>

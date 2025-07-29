@@ -13,7 +13,7 @@ class ExpensesController extends Controller
     {
         $expenses = Expense::where('tenant_id', Auth::user()->tenant_id)->latest()->get();
 
-        return view('user.expenses.index', compact('expenses'));
+        return view('products.index', compact('expenses'));
     }
 
     public function store(Request $request)

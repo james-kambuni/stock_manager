@@ -32,8 +32,8 @@ class Kernel extends HttpKernel
         'verified'   => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'tenant'     => \App\Http\Middleware\EnsureUserBelongsToTenant::class,
         'admin'      => \App\Http\Middleware\AdminMiddleware::class,
-        'superadmin' => \App\Http\Middleware\IsMasterAdmin::class,
-        'tenant.admin' => \App\Http\Middleware\IsTenantAdmin::class,
+        'masteradmin' => \App\Http\Middleware\IsMasterAdmin::class,
+        'tenantadmin' => \App\Http\Middleware\IsTenantAdmin::class,
         'check.tenant.status' => \App\Http\Middleware\CheckTenantStatus::class,
 
     ];

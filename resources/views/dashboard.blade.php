@@ -212,87 +212,84 @@ a:hover .arrow-icon small {
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Today'],
+            labels: ['Today'], // Only one label
             datasets: [
-                
-               
                 {
                     label: 'Sales',
-                    type: 'bar',
                     data: [{{ $salesToday ?? 0 }}],
-                    backgroundColor: 'rgba(13, 110, 253, 0.5)',
-                    borderRadius: 15,
-                    barThickness: 40
+                    backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                    borderRadius: 8,
+                    barThickness: 40,
                 },
                 {
                     label: 'Purchases',
-                    type: 'bar',
                     data: [{{ $purchasesToday ?? 0 }}],
-                    backgroundColor: 'rgba(255, 193, 7, 0.5)',
-                    borderRadius: 15,
-                    barThickness: 40
+                    backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                    borderRadius: 8,
+                    barThickness: 40,
                 }
             ]
         },
         options: {
+            indexAxis: 'x',
             responsive: true,
             maintainAspectRatio: false,
-            animation: {
-                duration: 1000,
-                easing: 'easeOutQuart'
+            interaction: {
+                mode: 'index',
+                intersect: false,
             },
             plugins: {
                 legend: {
                     position: 'top',
                     labels: {
-                        color: '#333',
                         font: {
+                            size: 14,
                             weight: 'bold'
-                        }
+                        },
+                        color: '#000'
                     }
                 },
                 tooltip: {
-                    backgroundColor: '#f8f9fa',
-                    titleColor: '#000',
-                    bodyColor: '#000',
-                    borderColor: '#dee2e6',
-                    borderWidth: 1,
+                    enabled: true,
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return `${context.dataset.label}: ${context.formattedValue}`;
                         }
                     }
                 }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: '#495057',
-                        font: {
-                            size: 12
-                        }
-                    },
-                    grid: {
-                        color: '#e9ecef',
-                        borderDash: [5, 5]
-                    }
-                },
                 x: {
+                    stacked: false,
                     ticks: {
-                        color: '#495057',
+                        color: '#333',
                         font: {
-                            size: 12
+                            size: 13,
+                            weight: 'bold'
                         }
                     },
                     grid: {
                         display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#333',
+                        font: {
+                            size: 13
+                        }
+                    },
+                    grid: {
+                        color: '#e0e0e0',
+                        borderDash: [4, 4]
                     }
                 }
             }
         }
     });
 </script>
+
 @endpush
 
 @endsection

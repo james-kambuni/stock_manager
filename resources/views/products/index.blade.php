@@ -117,7 +117,7 @@
                 <i class="bi bi-plus-circle"></i> Record Expense
             </button>
         </div>
-        @include('partials.expense-modal')
+        @include('partials.expense-card')
     </div>
 
     <!-- Reports Tab -->

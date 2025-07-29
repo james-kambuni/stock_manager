@@ -1,46 +1,46 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container mt-4">
-    <h2 class="mb-4">Manage Products</h2>
+<div class="container my-4">
+    <h3 class="mb-3 text-primary">📦 Manage Products</h3>
 
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
     <!-- Add Product Form -->
-    <div class="card mb-4">
+    <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">Add Product</div>
         <div class="card-body">
             <form action="{{ route('admin.products.store') }}" method="POST">
                 @csrf
-                <div class="row mb-3">
-                    <div class="col">
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
                         <input type="text" name="name" class="form-control" placeholder="Product Name" required>
                     </div>
-                    <div class="col">
+                    <div class="col-md-6 col-lg-4">
                         <input type="number" step="0.01" name="stock" class="form-control" placeholder="Initial Stock" required>
                     </div>
-                    <div class="col">
+                    <div class="col-md-6 col-lg-4">
                         <input type="number" step="0.01" name="cost_price" class="form-control" placeholder="Cost Price" required>
                     </div>
-                    <div class="col">
+                    <div class="col-md-6 col-lg-4">
                         <input type="number" step="0.01" name="selling_price" class="form-control" placeholder="Selling Price" required>
                     </div>
-                    <div class="col">
+                    <div class="col-md-6 col-lg-4">
                         <select name="is_perishable" class="form-select" required>
                             <option value="0">Non-Perishable</option>
                             <option value="1">Perishable</option>
                         </select>
                     </div>
-                    <div class="col">
+                    <div class="col-md-6 col-lg-4">
                         <input type="number" name="min_threshold" class="form-control" placeholder="Min Threshold">
                     </div>
-                    <div class="col">
+                    <div class="col-md-6 col-lg-4">
                         <input type="number" name="max_threshold" class="form-control" placeholder="Max Threshold">
                     </div>
                     <div class="col-auto">
-                        <button class="btn btn-success" type="submit">Add</button>
+                        <button class="btn btn-success w-100" type="submit">➕ Add</button>
                     </div>
                 </div>
             </form>
@@ -48,12 +48,12 @@
     </div>
 
     <!-- Product Table -->
-    <div class="card">
-        <div class="card-header bg-warning">Product Inventory</div>
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark fw-bold">Product Inventory</div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-bordered m-0">
-                    <thead>
+                <table class="table table-bordered table-hover align-middle m-0">
+                    <thead class="table-light">
                         <tr>
                             <th>Name</th>
                             <th>Stock</th>
@@ -64,7 +64,7 @@
                             <th>Min</th>
                             <th>Max</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,22 +88,20 @@
                             <td>Ksh {{ number_format($product->selling_price, 2) }}</td>
                             <td>Ksh {{ number_format($product->selling_price - $product->cost_price, 2) }}</td>
                             <td>
-                                @if($product->is_perishable)
-                                    <span class="badge bg-danger">Yes</span>
-                                @else
-                                    <span class="badge bg-secondary">No</span>
-                                @endif
+                                <span class="badge {{ $product->is_perishable ? 'bg-danger' : 'bg-secondary' }}">
+                                    {{ $product->is_perishable ? 'Yes' : 'No' }}
+                                </span>
                             </td>
                             <td>{{ $product->min_threshold ?? '-' }}</td>
                             <td>{{ $product->max_threshold ?? '-' }}</td>
                             <td class="{{ $color }}">{{ $status }}</td>
-                            <td>
+                            <td class="text-center">
                                 <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST" class="d-inline-block">
                                     @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Delete product?')">Delete</button>
+                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Delete product?')">🗑</button>
                                 </form>
 
-                                <button class="btn btn-sm btn-warning edit-btn"
+                                <button class="btn btn-sm btn-warning edit-btn mt-1"
                                     data-id="{{ $product->id }}"
                                     data-name="{{ $product->name }}"
                                     data-stock="{{ $product->stock }}"
@@ -113,70 +111,69 @@
                                     data-max="{{ $product->max_threshold }}"
                                     data-perishable="{{ $product->is_perishable }}"
                                     data-bs-toggle="modal" data-bs-target="#editProductModal">
-                                    Edit
+                                    ✏️
                                 </button>
                             </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
-
-                <!-- Edit Product Modal -->
-                <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <form method="POST" id="editProductForm">
-                            @csrf
-                            @method('PUT')
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Edit Product</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <input type="hidden" id="editProductId">
-                                    <div class="mb-3">
-                                        <label>Name</label>
-                                        <input type="text" class="form-control" id="editName" name="name" readonly>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label>Stock</label>
-                                        <input type="number" step="0.01" class="form-control" id="editStock" name="stock">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label>Cost Price</label>
-                                        <input type="number" step="0.01" class="form-control" id="editCost" name="cost_price">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label>Selling Price</label>
-                                        <input type="number" step="0.01" class="form-control" id="editPrice" name="selling_price">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label>Min Threshold</label>
-                                        <input type="number" class="form-control" id="editMin" name="min_threshold">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label>Max Threshold</label>
-                                        <input type="number" class="form-control" id="editMax" name="max_threshold">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label>Is Perishable?</label>
-                                        <select id="editPerishable" name="is_perishable" class="form-select">
-                                            <option value="0">Non-Perishable</option>
-                                            <option value="1">Perishable</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button class="btn btn-primary" type="submit">Update</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div> <!-- End Modal -->
-
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" id="editProductForm">
+            @csrf
+            @method('PUT')
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editProductId">
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" class="form-control" id="editName" name="name" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label>Stock</label>
+                        <input type="number" step="0.01" class="form-control" id="editStock" name="stock">
+                    </div>
+                    <div class="mb-3">
+                        <label>Cost Price</label>
+                        <input type="number" step="0.01" class="form-control" id="editCost" name="cost_price">
+                    </div>
+                    <div class="mb-3">
+                        <label>Selling Price</label>
+                        <input type="number" step="0.01" class="form-control" id="editPrice" name="selling_price">
+                    </div>
+                    <div class="mb-3">
+                        <label>Min Threshold</label>
+                        <input type="number" class="form-control" id="editMin" name="min_threshold">
+                    </div>
+                    <div class="mb-3">
+                        <label>Max Threshold</label>
+                        <input type="number" class="form-control" id="editMax" name="max_threshold">
+                    </div>
+                    <div class="mb-3">
+                        <label>Is Perishable?</label>
+                        <select id="editPerishable" name="is_perishable" class="form-select">
+                            <option value="0">Non-Perishable</option>
+                            <option value="1">Perishable</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Update</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 

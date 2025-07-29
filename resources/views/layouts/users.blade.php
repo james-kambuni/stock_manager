@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <title>User Panel - @yield('title', 'Dashboard')</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#000000">
+    <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Stock Manager">
+
+
+
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -142,6 +151,16 @@
                         <i class="bi bi-person-circle me-2"></i> Profile
                     </a>
                 </li>
+                @auth
+                    @if(auth()->user()->role === 'tenant_admin')
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center {{ request()->routeIs('admin.dashboard') ? 'active fw-bold text-info' : '' }}" href="{{ route('admin.dashboard') }}">
+                                <i class="bi bi-shield-lock-fill"></i> Admin
+                            </a>
+                        </li>
+                    @endif
+                @endauth
+
                 <li class="nav-item">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
@@ -210,6 +229,19 @@
             }, 5000); // Show for 5 seconds
         }
     });
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/serviceworker.js')
+                .then(function(registration) {
+                    console.log('[PWA] Service Worker registered with scope:', registration.scope);
+                })
+                .catch(function(error) {
+                    console.error('[PWA] Service Worker registration failed:', error);
+                });
+        });
+    }
 </script>
 
 

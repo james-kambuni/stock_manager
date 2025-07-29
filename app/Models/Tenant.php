@@ -9,7 +9,7 @@ class Tenant extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'email', 'phone', 'logo', 'is_active'];
+    protected $fillable = ['name', 'slug','business_name', 'email', 'phone', 'logo', 'is_active'];
 
     /**
      * Boot method to handle cascading deletes

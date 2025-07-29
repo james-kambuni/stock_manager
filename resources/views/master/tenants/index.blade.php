@@ -3,6 +3,7 @@
 @section('content')
 <div class="container mt-4">
     <h1 class="mb-4">Tenants</h1>
+
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -25,8 +26,9 @@
             <tr>
                 <th>#</th>
                 <th>Tenant ID</th>
-                <th>Logo</th> 
+                <th>Logo</th>
                 <th>Name</th>
+                <th>Business Name</th>
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Status</th>
@@ -46,6 +48,7 @@
                         @endif
                     </td>
                     <td>{{ $tenant->name }}</td>
+                    <td>{{ $tenant->business_name ?? '-' }}</td>
                     <td>{{ $tenant->email }}</td>
                     <td>{{ $tenant->phone }}</td>
                     <td>
@@ -54,7 +57,6 @@
                         </span>
                     </td>
                     <td>
-                        <!-- Toggle Status -->
                         <form action="{{ route('master.tenant.toggle', $tenant->id) }}" method="POST" style="display:inline;">
                             @csrf
                             <button class="btn btn-sm btn-warning" title="Toggle Status">
@@ -62,7 +64,6 @@
                             </button>
                         </form>
 
-                        <!-- Delete Tenant -->
                         <form action="{{ route('master.tenant.destroy', $tenant->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
@@ -71,12 +72,10 @@
                             </button>
                         </form>
 
-                        <!-- View Tenant Data -->
                         <a href="{{ route('master.tenant.data', $tenant->id) }}" class="btn btn-sm btn-info">
                             View Data
                         </a>
 
-                        <!-- Impersonate -->
                         <form action="{{ route('master.tenant.impersonate', $tenant->id) }}" method="POST" style="display:inline;">
                             @csrf
                             <button class="btn btn-sm btn-secondary" title="Impersonate">
@@ -87,7 +86,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="text-center">No tenants found.</td>
+                    <td colspan="9" class="text-center">No tenants found.</td>
                 </tr>
             @endforelse
         </tbody>

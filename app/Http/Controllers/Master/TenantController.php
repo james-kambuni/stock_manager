@@ -27,43 +27,44 @@ class TenantController extends Controller
     }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'tenant_name' => 'required|string|max:255|unique:tenants,name',
-        'email' => 'required|email|unique:users,email',
-        'password' => 'required|min:6|confirmed',
-        'phone' => 'required|string|max:20',
-        'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg,gif|max:2048',
-        'is_active' => 'nullable|boolean',
-    ]);
+    {
+        $request->validate([
+            'tenant_name' => 'required|string|max:255|unique:tenants,name',
+            'business_name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6|confirmed',
+            'phone' => 'required|string|max:20',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg,gif|max:2048',
+            'is_active' => 'nullable|boolean',
+        ]);
 
-    $logoPath = null;
-    if ($request->hasFile('logo')) {
-        $logoPath = $request->file('logo')->store('logos', 'public');
+        $logoPath = null;
+        if ($request->hasFile('logo')) {
+            $logoPath = $request->file('logo')->store('logos', 'public');
+        }
+
+        $tenant = Tenant::create([
+            'name' => $request->tenant_name,
+            'business_name' => $request->business_name,
+            'slug' => Str::slug($request->tenant_name),
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'logo' => $logoPath,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        User::create([
+            'name' => $request->tenant_name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => Hash::make($request->password),
+            'role' => 'tenant_admin',
+            'tenant_id' => $tenant->id,
+            'is_active' => $tenant->is_active,
+        ]);
+
+        return redirect()->route('master.tenants')->with('success', 'Tenant and admin created successfully.');
     }
-
-    $tenant = Tenant::create([
-        'name' => $request->tenant_name,
-        'slug' => Str::slug($request->tenant_name),
-        'email' => $request->email,
-        'phone' => $request->phone,
-        'logo' => $logoPath,
-        'is_active' => $request->boolean('is_active', true),
-    ]);
-
-    User::create([
-        'name' => $request->tenant_name,
-        'email' => $request->email,
-        'phone' => $request->phone,
-        'password' => Hash::make($request->password),
-        'role' => 'tenant_admin',
-        'tenant_id' => $tenant->id,
-        'is_active' => $tenant->is_active,
-    ]);
-
-    return redirect()->route('master.tenants')->with('success', 'Tenant and admin created successfully.');
-}
-
 
     public function toggle($id)
     {

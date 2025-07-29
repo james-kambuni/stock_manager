@@ -11,66 +11,55 @@ class LoginController extends Controller
     // Show login form
     public function showLoginForm()
     {
-        return view('auth.login'); // Make sure this Blade view exists
+        return view('auth.login'); 
     }
 
     // Handle login
     public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
-        ]);
+{
+    $credentials = $request->validate([
+        'email'    => ['required', 'email'],
+        'password' => ['required'],
+    ]);
 
-        if ($user->is_admin) {
-    // Superadmin
-            return redirect()->intended('/master/dashboard');
+    if (Auth::attempt($credentials)) {
+        $request->session()->regenerate();
+
+        $user = Auth::user();
+
+        // Deactivated user check
+        if (!$user->is_active) {
+            Auth::logout();
+            return back()->withErrors(['email' => 'Your account has been deactivated.']);
         }
 
-        if ($user->role === 'tenantadmin') {
-            return redirect()->intended('/admin/dashboard');
+        // Inactive tenant check
+        if ($user->tenant && !$user->tenant->is_active) {
+            Auth::logout();
+            return back()->withErrors(['email' => 'Your tenant account is paused.']);
         }
 
-        return redirect()->intended('/dashboard');
-
-
-            // Check if user is deactivated
-            if (!$user->is_active) {
-                Auth::logout();
-                return back()->withErrors([
-                    'email' => 'Your account has been deactivated.',
-                ]);
-            }
-
-            // Check if user's tenant is paused
-            if ($user->tenant && $user->tenant->is_active === 0) {
-                Auth::logout();
-                return back()->withErrors([
-                    'email' => 'Your tenant account is paused. Please contact support.',
-                ]);
-            }
-
-            // Route based on role flags or values
-            if ($user->role === 'superadmin') {
-                return redirect()->intended('/master/dashboard');
-            } elseif ($user->role === 'tenant_admin') {
-                return redirect()->intended('/admin/dashboard');
-            }
-
-            // Default user route
-            return redirect()->intended('/dashboard');
+        // ✅ Custom Redirect Based on Role
+        if ($user->superadmin) {
+            return redirect('/master/dashboard');
+        } elseif ($user->role === 'tenant_admin') {
+            return redirect('/admin/dashboard');
+        } else {
+            return redirect('/dashboard'); 
         }
-
-        return back()->withErrors([
-            'email' => 'Invalid email or password.',
-        ])->onlyInput('email');
     }
 
-    // Logout
+    // Failed login
+    return back()->withErrors([
+        'email' => 'Invalid email or password.',
+    ])->onlyInput('email');
+}
+
+
+    // Logout method
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

@@ -13,23 +13,40 @@ use Carbon\Carbon;
 class ReportController extends Controller
 {
     public function index(Request $request)
-    {
-        $type = $request->input('type', 'inventory'); // default to inventory
+{
+    $type = $request->input('type', 'inventory'); // default to inventory
 
-        switch ($type) {
-            case 'sales':
-                $sales = SaleItem::with('product', 'sale')->latest()->get();
-                return view('users.reports', compact('sales'))->with('reportType', 'sales');
+    // Initialize all variables to avoid undefined variable errors
+    $sales = collect();
+    $purchases = collect();
+    $products = collect();
 
-            case 'purchases':
-                $purchases = Purchase::with('product')->latest()->get();
-                return view('users.reports', compact('purchases'))->with('reportType', 'purchases');
+    switch ($type) {
+        case 'sales':
+            $sales = SaleItem::with('product', 'sale')
+                ->whereHas('sale', function ($q) {
+                    $q->where('tenant_id', auth()->user()->tenant_id);
+                })
+                ->latest()
+                ->get();
+            break;
 
-            default:
-                $products = Product::all();
-                return view('users.reports', compact('products'))->with('reportType', 'inventory');
-        }
+        case 'purchases':
+            $purchases = Purchase::with('product')
+                ->where('tenant_id', auth()->user()->tenant_id)
+                ->latest()
+                ->get();
+            break;
+
+        default: // inventory
+            $products = Product::where('tenant_id', auth()->user()->tenant_id)->get();
+            break;
     }
+
+    return view('products.index', compact('sales', 'purchases', 'products'))
+        ->with('reportType', $type);
+}
+
 
     // ✅ Show today's sales, purchases, and expenses
    public function today()

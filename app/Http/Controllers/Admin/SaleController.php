@@ -74,7 +74,10 @@ public function printReceipt($saleId)
                 ->where('tenant_id', $tenantId)
                 ->findOrFail($saleId);
 
-    return view('sales.receipt', compact('sale'));
+    $tenant = \App\Models\Tenant::findOrFail($tenantId); // Get the business details
+
+    return view('sales.receipt', compact('sale', 'tenant'));
 }
+
 
 }

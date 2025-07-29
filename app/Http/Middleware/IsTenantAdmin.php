@@ -10,12 +10,18 @@ class IsTenantAdmin
 {
     public function handle(Request $request, Closure $next)
     {
-        $user = Auth::user();
-
-        if ($user && $user->role === 'is_admin') {
-            return $next($request);
+        // Ensure user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login'); // Or abort(403) if you prefer
         }
 
-        abort(403, 'Unauthorized: Admins only.');
+        $user = Auth::user();
+
+        // Check if role matches
+        if ($user->role !== 'tenant_admin') {
+            abort(403, 'Unauthorized: Tenant Admins only.');
+        }
+
+        return $next($request);
     }
 }

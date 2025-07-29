@@ -37,25 +37,15 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 
-// COMMON DASHBOARD & PROFILE ROUTES
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
-    
-    Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-
 // MASTER ADMIN (SUPERADMIN) ROUTES
-Route::prefix('master')->middleware(['auth', 'superadmin'])->name('master.')->group(function () {
+Route::prefix('master')->middleware(['auth', 'admin'])->name('master.')->group(function () {
     Route::get('/dashboard', [MasterAdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/tenants', [MasterAdminController::class, 'tenants'])->name('tenants');
     Route::get('/tenant/{id}/data', [MasterAdminController::class, 'tenantData'])->name('tenant.data');
 });
 
 // Master Tenant Routes
-Route::prefix('master/tenants')->middleware(['auth', 'superadmin'])->name('master.tenant.')->group(function () {
+Route::prefix('master/tenants')->middleware(['auth', 'admin'])->name('master.tenant.')->group(function () {
     Route::get('/tenants', [TenantController::class, 'index'])->name('index');
     Route::get('/create', [TenantController::class, 'create'])->name('create');
     Route::post('/', [TenantController::class, 'store'])->name('store'); 
@@ -67,7 +57,7 @@ Route::prefix('master/tenants')->middleware(['auth', 'superadmin'])->name('maste
 });
 
 
-Route::prefix('admin')->middleware(['auth', 'tenant'])->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     
 
@@ -119,7 +109,14 @@ Route::prefix('admin')->middleware(['auth', 'tenant'])->name('admin.')->group(fu
 
 });
 
-
+// COMMON DASHBOARD & PROFILE ROUTES
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
+    
+    Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 // USER ROUTES
 Route::middleware(['auth', 'tenant'])->name('user.')->group(function () {
     

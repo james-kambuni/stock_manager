@@ -190,13 +190,16 @@ public function purchase(Request $request)
     }
 
     public function printReceipt($saleId)
-    {
-        $tenantId = $this->getTenantId();
+{
+    $tenantId = auth()->user()->tenant_id;
 
-        $sale = Sale::with('items.product')
-                    ->where('tenant_id', $tenantId)
-                    ->findOrFail($saleId);
+    $sale = Sale::with('items.product')
+                ->where('tenant_id', $tenantId)
+                ->findOrFail($saleId);
 
-        return view('sales.receipt', compact('sale'));
-    }
+    $tenant = \App\Models\Tenant::find($tenantId); // 🔥 Get tenant info
+
+    return view('sales.receipt', compact('sale', 'tenant'));
+}
+
 }

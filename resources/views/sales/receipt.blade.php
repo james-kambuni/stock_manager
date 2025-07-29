@@ -104,16 +104,14 @@
 </style>
 
 <div class="receipt-container">
-    <div class="center bold">
-        Junik Drip<br>
-        +254 700 123 456<br>
-        ------------------------------<br>
-        <span class="bold">SALES RECEIPT</span><br>
-        {{ now()->format('Y-m-d H:i') }}
-    </div>
-
+<div class="center bold">
+    {{ $tenant->business_name ?? 'Business Name' }}<br>
+    {{ $tenant->phone ?? 'Phone Number' }}<br>
+    ------------------------------<br>
+    <span class="bold">SALES RECEIPT</span><br>
+    {{ now()->format('Y-m-d H:i') }}
+</div>
     <div class="receipt-line"></div>
-
     <table>
         <thead>
             <tr>
