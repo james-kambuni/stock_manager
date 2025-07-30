@@ -38,14 +38,14 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 
 // MASTER ADMIN (SUPERADMIN) ROUTES
-Route::prefix('master')->middleware(['auth', 'admin'])->name('master.')->group(function () {
+Route::prefix('master')->middleware(['auth', ])->name('master.')->group(function () {
     Route::get('/dashboard', [MasterAdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/tenants', [MasterAdminController::class, 'tenants'])->name('tenants');
     Route::get('/tenant/{id}/data', [MasterAdminController::class, 'tenantData'])->name('tenant.data');
 });
 
 // Master Tenant Routes
-Route::prefix('master/tenants')->middleware(['auth', ])->name('master.tenant.')->group(function () {
+Route::prefix('master/tenants')->middleware(['auth',])->name('master.tenant.')->group(function () {
     Route::get('/tenants', [TenantController::class, 'index'])->name('index');
     Route::get('/create', [TenantController::class, 'create'])->name('create');
     Route::post('/', [TenantController::class, 'store'])->name('store'); 
