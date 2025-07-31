@@ -21,6 +21,13 @@
                         <input type="number" name="amount" step="0.01" class="form-control" placeholder="0.00" min="0" required>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Date</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-3">
