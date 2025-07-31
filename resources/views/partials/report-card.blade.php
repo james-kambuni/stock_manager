@@ -4,7 +4,7 @@
         <i class="bi bi-bar-chart-line me-2"></i> <strong>Generate Report</strong>
     </div>
     <div class="card-body bg-light">
-        <form method="GET" action="{{ route('user.expenses.index') }}">
+        <form method="GET" action="{{ route('user.reports.index') }}">
             <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Report Type</label>
