@@ -12,64 +12,65 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
+    // Show reports based on selected type (sales, purchases, inventory)
     public function index(Request $request)
-{
-    $type = $request->input('type', 'inventory'); // default to inventory
+    {
+        $type = $request->input('type', 'inventory'); // default to inventory
 
-    // Initialize all variables to avoid undefined variable errors
-    $sales = collect();
-    $purchases = collect();
-    $products = collect();
+        $tenantId = auth()->user()->tenant_id;
 
-    switch ($type) {
-        case 'sales':
-            $sales = SaleItem::with('product', 'sale')
-                ->whereHas('sale', function ($q) {
-                    $q->where('tenant_id', auth()->user()->tenant_id);
-                })
-                ->latest()
-                ->get();
-            break;
+        // Initialize collections
+        $sales = collect();
+        $purchases = collect();
+        $products = collect();
 
-        case 'purchases':
-            $purchases = Purchase::with('product')
-                ->where('tenant_id', auth()->user()->tenant_id)
-                ->latest()
-                ->get();
-            break;
+        switch ($type) {
+            case 'sales':
+                $sales = SaleItem::with('product', 'sale')
+                    ->whereHas('sale', function ($q) use ($tenantId) {
+                        $q->where('tenant_id', $tenantId);
+                    })
+                    ->latest()
+                    ->get();
+                break;
 
-        default: // inventory
-            $products = Product::where('tenant_id', auth()->user()->tenant_id)->get();
-            break;
+            case 'purchases':
+                $purchases = Purchase::with('product')
+                    ->where('tenant_id', $tenantId)
+                    ->latest()
+                    ->get();
+                break;
+
+            default: // inventory
+                $products = Product::where('tenant_id', $tenantId)->get();
+                break;
+        }
+
+        return view('users.reports.index', compact('sales', 'purchases', 'products', 'type'));
     }
 
-    return view('products.index', compact('sales', 'purchases', 'products'))
-        ->with('reportType', $type);
-}
+    // Show today's transactions (sales, purchases, expenses)
+    public function today()
+    {
+        $today = Carbon::today();
+        $tenantId = auth()->user()->tenant_id;
 
+        $sales = SaleItem::with('product', 'sale')
+            ->whereDate('created_at', $today)
+            ->whereHas('sale', function ($q) use ($tenantId) {
+                $q->where('tenant_id', $tenantId);
+            })
+            ->get();
 
-    // ✅ Show today's sales, purchases, and expenses
-   public function today()
-{
-    $today = \Carbon\Carbon::today();
-    $tenantId = auth()->user()->tenant_id;
+        $purchases = Purchase::with('product')
+            ->whereDate('created_at', $today)
+            ->where('tenant_id', $tenantId)
+            ->get();
 
-    $sales = SaleItem::with('product', 'sale')
-        ->whereDate('created_at', $today)
-        ->whereHas('sale', function ($q) use ($tenantId) {
-            $q->where('tenant_id', $tenantId);
-        })
-        ->get();
+        $expenses = Expense::whereDate('created_at', $today)
+            ->where('tenant_id', $tenantId)
+            ->get();
 
-    $purchases = Purchase::with('product')
-        ->whereDate('created_at', $today)
-        ->where('tenant_id', $tenantId)
-        ->get();
-
-    $expenses = \App\Models\Expense::whereDate('created_at', $today)
-        ->where('tenant_id', $tenantId) 
-        ->get();
-
-    return view('users.reports.today', compact('sales', 'purchases', 'expenses'));
-}
+        return view('users.reports.today', compact('sales', 'purchases', 'expenses'));
+    }
 }
