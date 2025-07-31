@@ -17,7 +17,7 @@ Schema::create('stock_batches', function (Blueprint $table) {
     $table->foreignId('tenant_id');
     $table->foreignId('product_id');
     $table->integer('quantity');
-    $table->integer('remaining_quantity');
+    $table->integer('remaining');
     $table->decimal('cost_price', 10, 2);
     $table->date('expiry_date')->nullable();
     $table->timestamps();
