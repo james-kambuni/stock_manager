@@ -112,11 +112,6 @@
 
     <!-- Expenses Tab -->
     <div class="tab-pane fade" id="expenses" role="tabpanel" aria-labelledby="expenses-tab">
-        <div class="d-flex justify-content-end mb-3">
-            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#expenseModal">
-                <i class="bi bi-plus-circle"></i> Record Expense
-            </button>
-        </div>
         @include('partials.expense-card')
     </div>
 
