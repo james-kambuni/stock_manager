@@ -40,7 +40,7 @@
 
         {{-- Report Results --}}
         <div id="reportResults" class="mt-4 p-3 bg-white border rounded small">
-            @if(isset($reportType) && isset($reportData))
+            @if(isset($reportType) && $reportData && count($reportData) > 0)
                 <h6 class="fw-bold text-dark mb-3">
                     Showing {{ ucfirst($reportType) }} Report from {{ request('start') }} to {{ request('end') }}
                 </h6>

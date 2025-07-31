@@ -13,26 +13,18 @@ use Carbon\Carbon;
 class ReportController extends Controller
 {
     // Show reports based on selected type (sales, purchases, inventory)
-    public function index(Request $request)
+   public function index(Request $request)
 {
     $type = $request->input('type', 'inventory');
-    $tenantId = auth()->user()->tenant_id;
-
-    $sales = collect();
-    $purchases = collect();
-    $products = collect();
-
     $start = $request->input('start');
     $end = $request->input('end');
+    $tenantId = auth()->user()->tenant_id;
 
-    // Validate dates if provided
-    if ($start && $end && $start > $end) {
-        return back()->withErrors(['end' => 'End date must be after start date']);
-    }
+    $reportData = collect();
 
     switch ($type) {
         case 'sales':
-            $sales = SaleItem::with('product', 'sale')
+            $reportData = SaleItem::with('product', 'sale')
                 ->whereHas('sale', function ($q) use ($tenantId) {
                     $q->where('tenant_id', $tenantId);
                 })
@@ -44,7 +36,7 @@ class ReportController extends Controller
             break;
 
         case 'purchases':
-            $purchases = Purchase::with('product')
+            $reportData = Purchase::with('product')
                 ->where('tenant_id', $tenantId)
                 ->when($start && $end, function ($q) use ($start, $end) {
                     $q->whereBetween('created_at', [$start, $end]);
@@ -54,11 +46,12 @@ class ReportController extends Controller
             break;
 
         default: // inventory
-            $products = Product::where('tenant_id', $tenantId)->get();
+            $reportData = Product::where('tenant_id', $tenantId)->get();
             break;
     }
 
-    return view('users.reports.index', compact('sales', 'purchases', 'products', 'type', 'start', 'end'));
+    return view('users.reports.index', compact('reportData'))
+        ->with('reportType', $type);
 }
 
 
