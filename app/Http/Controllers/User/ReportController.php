@@ -14,40 +14,53 @@ class ReportController extends Controller
 {
     // Show reports based on selected type (sales, purchases, inventory)
     public function index(Request $request)
-    {
-        $type = $request->input('type', 'inventory'); // default to inventory
+{
+    $type = $request->input('type', 'inventory');
+    $tenantId = auth()->user()->tenant_id;
 
-        $tenantId = auth()->user()->tenant_id;
+    $sales = collect();
+    $purchases = collect();
+    $products = collect();
 
-        // Initialize collections
-        $sales = collect();
-        $purchases = collect();
-        $products = collect();
+    $start = $request->input('start');
+    $end = $request->input('end');
 
-        switch ($type) {
-            case 'sales':
-                $sales = SaleItem::with('product', 'sale')
-                    ->whereHas('sale', function ($q) use ($tenantId) {
-                        $q->where('tenant_id', $tenantId);
-                    })
-                    ->latest()
-                    ->get();
-                break;
-
-            case 'purchases':
-                $purchases = Purchase::with('product')
-                    ->where('tenant_id', $tenantId)
-                    ->latest()
-                    ->get();
-                break;
-
-            default: // inventory
-                $products = Product::where('tenant_id', $tenantId)->get();
-                break;
-        }
-
-        return view('users.reports.index', compact('sales', 'purchases', 'products', 'type'));
+    // Validate dates if provided
+    if ($start && $end && $start > $end) {
+        return back()->withErrors(['end' => 'End date must be after start date']);
     }
+
+    switch ($type) {
+        case 'sales':
+            $sales = SaleItem::with('product', 'sale')
+                ->whereHas('sale', function ($q) use ($tenantId) {
+                    $q->where('tenant_id', $tenantId);
+                })
+                ->when($start && $end, function ($q) use ($start, $end) {
+                    $q->whereBetween('created_at', [$start, $end]);
+                })
+                ->latest()
+                ->get();
+            break;
+
+        case 'purchases':
+            $purchases = Purchase::with('product')
+                ->where('tenant_id', $tenantId)
+                ->when($start && $end, function ($q) use ($start, $end) {
+                    $q->whereBetween('created_at', [$start, $end]);
+                })
+                ->latest()
+                ->get();
+            break;
+
+        default: // inventory
+            $products = Product::where('tenant_id', $tenantId)->get();
+            break;
+    }
+
+    return view('users.reports.index', compact('sales', 'purchases', 'products', 'type', 'start', 'end'));
+}
+
 
     // Show today's transactions (sales, purchases, expenses)
     public function today()
