@@ -125,13 +125,14 @@
             display: block;
             position: fixed;
             top: 10px;
-            left: 15px;
+            right: 15px;
             background: none;
             border: none;
             font-size: 24px;
             z-index: 1001;
             color: #000;
         }
+
 
         .dark-mode .menu-toggle {
             color: #fff;
