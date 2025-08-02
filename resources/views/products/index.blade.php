@@ -90,11 +90,11 @@
                 <i class="bi bi-wallet2"></i> Expenses
             </button>
         </li>
-        <li class="nav-item" role="presentation">
+        <!-- <li class="nav-item" role="presentation">
             <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
                 <i class="bi bi-bar-chart-line"></i> Reports
             </button>
-        </li>
+        </li> -->
     </ul>
 </div>
 
@@ -120,5 +120,4 @@
         @include('partials.report-card')
     </div>
 </div>
-
 @endsection
