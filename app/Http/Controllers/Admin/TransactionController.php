@@ -8,8 +8,8 @@ use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
-use Illuminate\Support\Facades\DB;
 use App\Models\StockBatch;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -20,44 +20,43 @@ class TransactionController extends Controller
     }
 
     public function storePurchase(Request $request)
-{
-    $request->validate([
-        'product_id' => 'required|exists:products,id',
-        'quantity' => 'required|numeric|min:1',
-        'unit_cost' => 'required|numeric|min:0', // ✅ Correct field name
-        'expiry_date' => 'nullable|date',
-    ]);
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|numeric|min:1',
+            'unit_cost' => 'required|numeric|min:0',
+            'expiry_date' => 'nullable|date',
+        ]);
 
-    $tenantId = auth()->user()->tenant_id;
+        $tenantId = auth()->user()->tenant_id;
 
-    $product = Product::where('id', $request->product_id)
-        ->where('tenant_id', $tenantId)
-        ->firstOrFail();
+        $product = Product::where('id', $request->product_id)
+            ->where('tenant_id', $tenantId)
+            ->firstOrFail();
 
-    $purchase = Purchase::create([
-        'product_id' => $product->id,
-        'quantity' => $request->quantity,
-        'unit_cost' => $request->unit_cost, // ✅ Match field name
-        'tenant_id' => $tenantId,
-    ]);
+        $purchase = Purchase::create([
+            'product_id' => $product->id,
+            'quantity' => $request->quantity,
+            'unit_cost' => $request->unit_cost,
+            'tenant_id' => $tenantId,
+        ]);
 
-    StockBatch::create([
-        'product_id' => $product->id,
-        'purchase_id' => $purchase->id,
-        'quantity' => $request->quantity,
-        'remaining' => $request->quantity,
-        'expiry_date' => $request->expiry_date,
-        'cost_price' => $request->unit_cost,
-        'tenant_id' => $tenantId,
-    ]);
+        StockBatch::create([
+            'product_id' => $product->id,
+            'purchase_id' => $purchase->id,
+            'quantity' => $request->quantity,
+            'remaining' => $request->quantity,
+            'expiry_date' => $request->expiry_date,
+            'cost_price' => $request->unit_cost,
+            'tenant_id' => $tenantId,
+        ]);
 
-    $product->stock += $request->quantity;
-    $product->cost_price = $request->unit_cost;
-    $product->save();
+        $product->stock += $request->quantity;
+        $product->cost_price = $request->unit_cost;
+        $product->save();
 
-    return redirect()->back()->with('success', 'Purchase recorded successfully.');
-}
-
+        return redirect()->back()->with('success', 'Purchase recorded successfully.');
+    }
 
     public function storeSale(Request $request)
     {
@@ -109,67 +108,93 @@ class TransactionController extends Controller
         return redirect()->route('admin.transactions.receipt', $sale->id)->with('success', 'Sale recorded successfully.');
     }
 
-public function storeSaleMultiple(Request $request)
-{
-    \Log::info("SALE MULTIPLE SUBMITTED: " . json_encode($request->all()));
-
-    DB::beginTransaction();
-    try {
-        // Step 1: Create Sale record
-        $sale = Sale::create([
-            'sale_date' => now(),
-            'total' => 0,
+    public function storeSaleMultiple(Request $request)
+    {
+        $request->validate([
+            'products' => 'required|array',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|numeric|min:1',
+            'products.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        $total = 0;
+        $tenantId = auth()->user()->tenant_id;
 
-        foreach ($request->products as $item) {
-            $product = Product::findOrFail($item['product_id']);
-
-            $quantity = $item['quantity'];
-            $unitPrice = $item['unit_price'];
-            $unitCost = $product->cost_price ?? 0;
-
-            $subtotal = $unitPrice * $quantity;
-            $total += $subtotal;
-
-            // Step 2: Create SaleItem
-            SaleItem::create([
-                'sale_id' => $sale->id,
-                'product_id' => $product->id,
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'unit_cost' => $unitCost,
-                'total' => $subtotal,
+        DB::beginTransaction();
+        try {
+            $sale = Sale::create([
                 'sale_date' => now(),
+                'total' => 0,
+                'tenant_id' => $tenantId,
             ]);
 
-            // Step 3: Deduct product stock
-            $product->stock -= $quantity;
-            $product->save();
+            $total = 0;
 
-            // Optional: reduce from batches (FEFO) here
+            foreach ($request->products as $item) {
+                $product = Product::where('id', $item['product_id'])
+                    ->where('tenant_id', $tenantId)
+                    ->firstOrFail();
+
+                $quantity = $item['quantity'];
+                $unitPrice = $item['unit_price'];
+
+                if ($product->stock < $quantity) {
+                    throw new \Exception("Insufficient stock for product: {$product->name}");
+                }
+
+                // FEFO logic: deduct from batches in order of expiry
+                $remainingToSell = $quantity;
+                $unitCost = 0;
+                $batches = StockBatch::where('product_id', $product->id)
+                    ->where('tenant_id', $tenantId)
+                    ->where('remaining', '>', 0)
+                    ->orderBy('expiry_date', 'asc')
+                    ->get();
+
+                foreach ($batches as $batch) {
+                    if ($remainingToSell <= 0) break;
+
+                    $deductQty = min($batch->remaining, $remainingToSell);
+                    $batch->remaining -= $deductQty;
+                    $batch->save();
+
+                    $unitCost += $deductQty * $batch->cost_price;
+                    $remainingToSell -= $deductQty;
+                }
+
+                $subtotal = $unitPrice * $quantity;
+                $total += $subtotal;
+
+                SaleItem::create([
+                    'sale_id' => $sale->id,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'unit_cost' => $unitCost / max($quantity, 1), // Avoid division by 0
+                    'total' => $subtotal,
+                    'sale_date' => now(),
+                ]);
+
+                $product->stock -= $quantity;
+                $product->save();
+            }
+
+            $sale->update(['total' => $total]);
+
+            DB::commit();
+
+            return back()->with('success', 'Sale completed successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("SALE ERROR: " . $e->getMessage());
+            return back()->with('error', 'Error processing sale: ' . $e->getMessage());
         }
-
-        // Step 4: Update total on sale
-        $sale->update(['total' => $total]);
-
-        DB::commit();
-
-        return back()->with('success', 'Sale completed successfully!');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error("SALE ERROR: " . $e->getMessage());
-        return back()->with('error', 'Error processing sale.');
     }
-}
-
 
     public function printReceipt($saleId)
     {
         $tenantId = auth()->user()->tenant_id;
 
-        $sale = Sale::with('product')
+        $sale = Sale::with('saleItems.product')
             ->where('tenant_id', $tenantId)
             ->findOrFail($saleId);
 
