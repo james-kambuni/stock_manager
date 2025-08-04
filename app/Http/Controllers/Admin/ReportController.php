@@ -162,29 +162,22 @@ class ReportController extends Controller
     $tenantId = auth()->user()->tenant_id;
     $profits = [];
 
-    // Monthly Profit for past 4 months
+    // Monthly Gross Profit for past 4 months
     for ($i = 3; $i >= 0; $i--) {
-        $month = Carbon::now()->subMonths($i);
+        $month = now()->subMonths($i);
         $monthName = $month->format('F');
 
-        $totalSales = DB::table('sale_items')
+        $monthlyGrossProfit = DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->where('sales.tenant_id', $tenantId)
             ->whereMonth('sale_items.created_at', $month->month)
             ->whereYear('sale_items.created_at', $month->year)
-            ->sum(DB::raw('quantity * unit_price'));
-
-        $totalPurchases = DB::table('purchases')
-            ->where('tenant_id', $tenantId)
-            ->whereMonth('created_at', $month->month)
-            ->whereYear('created_at', $month->year)
-            ->sum(DB::raw('quantity * unit_cost'));
-
-        $profit = $totalSales - $totalPurchases;
+            ->sum(DB::raw('(sale_items.unit_price - products.cost_price) * sale_items.quantity'));
 
         $profits[] = [
             'month' => $monthName,
-            'profit' => $profit,
+            'profit' => $monthlyGrossProfit,
         ];
     }
 
