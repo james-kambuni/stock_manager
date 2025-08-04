@@ -25,8 +25,8 @@
       "form_factor": "narrow"
     },
     {
-      "src": "/screenshots/inventory-report.png",
-      "sizes": "1920x1080",
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1920x907",
       "type": "image/png",
       "form_factor": "wide"
     }
