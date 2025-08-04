@@ -158,79 +158,79 @@ class ReportController extends Controller
     }
 
     public function profits()
-    {
-        $tenantId = auth()->user()->tenant_id;
-        $profits = [];
+{
+    $tenantId = auth()->user()->tenant_id;
+    $profits = [];
 
-        // Monthly Profit for past 4 months
-        for ($i = 3; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $monthName = $month->format('F');
+    // Monthly Profit for past 4 months
+    for ($i = 3; $i >= 0; $i--) {
+        $month = Carbon::now()->subMonths($i);
+        $monthName = $month->format('F');
 
-            $totalSales = DB::table('sale_items')
-                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-                ->where('sales.tenant_id', $tenantId)
-                ->whereMonth('sale_items.created_at', $month->month)
-                ->whereYear('sale_items.created_at', $month->year)
-                ->sum(DB::raw('quantity * unit_price'));
-
-            $totalPurchases = DB::table('purchases')
-                ->where('tenant_id', $tenantId)
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->sum(DB::raw('quantity * unit_cost'));
-
-            $profit = $totalSales - $totalPurchases;
-
-            $profits[] = [
-                'month' => $monthName,
-                'profit' => $profit,
-            ];
-        }
-
-        // Top products profit - Last 1 Month
-        $monthlyTopProducts = DB::table('sale_items')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
+        $totalSales = DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
             ->where('sales.tenant_id', $tenantId)
-            ->where('sale_items.created_at', '>=', Carbon::now()->subMonth())
-            ->groupBy('products.name')
-            ->orderByDesc('profit')
-            ->take(10)
-            ->get();
+            ->whereMonth('sale_items.created_at', $month->month)
+            ->whereYear('sale_items.created_at', $month->year)
+            ->sum(DB::raw('quantity * unit_price'));
 
-        // Top products profit - Last 1 Week
-        $weeklyTopProducts = DB::table('sale_items')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
-            ->where('sales.tenant_id', $tenantId)
-            ->where('sale_items.created_at', '>=', Carbon::now()->subWeek())
-            ->groupBy('products.name')
-            ->orderByDesc('profit')
-            ->take(10)
-            ->get();
+        $totalPurchases = DB::table('purchases')
+            ->where('tenant_id', $tenantId)
+            ->whereMonth('created_at', $month->month)
+            ->whereYear('created_at', $month->year)
+            ->sum(DB::raw('quantity * unit_cost'));
 
-        // Top products profit - Yesterday
-        $yesterdayTopProducts = DB::table('sale_items')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
-            ->where('sales.tenant_id', $tenantId)
-            ->whereDate('sale_items.created_at', Carbon::yesterday())
-            ->groupBy('products.name')
-            ->orderByDesc('profit')
-            ->take(10)
-            ->get();
+        $profit = $totalSales - $totalPurchases;
 
-        return view('admin.reports.profits', compact(
-            'profits',
-            'monthlyTopProducts',
-            'weeklyTopProducts',
-            'yesterdayTopProducts'
-        ));
+        $profits[] = [
+            'month' => $monthName,
+            'profit' => $profit,
+        ];
     }
+
+    // Top products profit - Last 1 Month
+    $monthlyTopProducts = DB::table('sale_items')
+        ->join('products', 'sale_items.product_id', '=', 'products.id')
+        ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+        ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
+        ->where('sales.tenant_id', $tenantId)
+        ->where('sale_items.created_at', '>=', Carbon::now()->subMonth())
+        ->groupBy('products.name')
+        ->orderByDesc('profit')
+        ->take(10)
+        ->get();
+
+    // Top products profit - Last 1 Week
+    $weeklyTopProducts = DB::table('sale_items')
+        ->join('products', 'sale_items.product_id', '=', 'products.id')
+        ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+        ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
+        ->where('sales.tenant_id', $tenantId)
+        ->where('sale_items.created_at', '>=', Carbon::now()->subWeek())
+        ->groupBy('products.name')
+        ->orderByDesc('profit')
+        ->take(10)
+        ->get();
+
+    // Top products profit - Yesterday
+    $yesterdayTopProducts = DB::table('sale_items')
+        ->join('products', 'sale_items.product_id', '=', 'products.id')
+        ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+        ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
+        ->where('sales.tenant_id', $tenantId)
+        ->whereDate('sale_items.created_at', Carbon::yesterday())
+        ->groupBy('products.name')
+        ->orderByDesc('profit')
+        ->take(10)
+        ->get();
+
+    return view('admin.reports.profits', compact(
+        'profits',
+        'monthlyTopProducts',
+        'weeklyTopProducts',
+        'yesterdayTopProducts'
+    ));
+}
 public function expiryReport()
     {
         $tenantId = auth()->user()->tenant_id;
