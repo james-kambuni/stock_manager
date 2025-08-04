@@ -42,7 +42,7 @@ class PurchaseController extends Controller
             'product_id' => $product->id,
             'purchase_id' => $purchase->id,
             'quantity' => $request->quantity,
-            'remaining_quantity' => $request->quantity,
+            'remaining' => $request->quantity,
             'expiry_date' => $request->expiry_date,
             'cost_price' => $request->unit_cost,
             'tenant_id' => auth()->user()->tenant_id,

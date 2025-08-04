@@ -277,35 +277,41 @@ public function today()
 
     public function monthly()
 {
-    $startOfMonth = Carbon::now()->startOfMonth();
-    $endOfMonth = Carbon::now()->endOfMonth();
+    $tenantId = auth()->user()->tenant_id;
+    $startOfMonth = \Carbon\Carbon::now()->startOfMonth();
+    $endOfMonth = \Carbon\Carbon::now()->endOfMonth();
 
-    // If you're using multi-tenancy:
-    $tenantId = auth()->user()->tenant_id ?? null;
-
-    $purchases = \App\Models\Purchase::whereBetween('created_at', [$startOfMonth, $endOfMonth])
-        ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
+    $sales = \App\Models\SaleItem::with(['product', 'sale'])
+        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+        ->whereHas('sale', fn($q) => $q->where('tenant_id', $tenantId))
         ->get();
 
-    $totalPurchases = $purchases->sum(fn($p) => $p->quantity * $p->unit_cost); // or unit_cost if used
+    $purchases = \App\Models\Purchase::with('product')
+        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+        ->where('tenant_id', $tenantId)
+        ->get();
 
-   $totalSales = Sale::whereBetween('created_at', [$startOfMonth, $endOfMonth])
-    ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
-    ->sum('total');
+    $expenses = \App\Models\Expense::where('tenant_id', $tenantId)
+        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+        ->get();
 
-    $totalExpenses = \App\Models\Expense::whereBetween('created_at', [$startOfMonth, $endOfMonth])
-        ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
-        ->sum('amount');
+    $totalSales = $sales->sum(fn($s) => $s->quantity * $s->unit_price);
+    $totalPurchases = $purchases->sum(fn($p) => $p->quantity * $p->unit_cost);
+    $totalExpenses = $expenses->sum('amount');
 
-    $netProfit = $totalSales - $totalPurchases - $totalExpenses;
+    $grossProfit = $sales->sum(function ($s) {
+        $cost = optional($s->product)->cost_price ?? 0;
+        return ($s->unit_price - $cost) * $s->quantity;
+    });
+
+    $netProfit = $grossProfit - $totalExpenses;
 
     return view('admin.reports.monthly', compact(
-        'totalPurchases',
-        'totalSales',
-        'totalExpenses',
-        'netProfit'
+        'sales', 'purchases', 'expenses',
+        'totalSales', 'totalPurchases', 'grossProfit', 'totalExpenses', 'netProfit'
     ));
 }
+
 
     public function generate(Request $request)
     {
