@@ -8,12 +8,12 @@
         <div class="col-12 col-sm-6 col-lg-3">
             <div class="card text-white bg-gradient-primary shadow-sm hover-shadow h-100">
                 <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1">Total Products</h6>
-                        <h4>{{ $productCount ?? 0 }}</h4>
-                    </div>
-                    <i class="fas fa-box fa-2x"></i>
+                <div>
+                    <h6 class="mb-1">Service Sales</h6>
+                    <h4>KSh {{ number_format($serviceTotal ?? 0, 2) }}</h4>
                 </div>
+            <i class="fas fa-concierge-bell fa-2x text-primary"></i>
+        </div>
             </div>
         </div>
 
@@ -70,7 +70,7 @@
 
 @section('footer')
 <footer class="text-center text-muted py-3 small mt-auto">
-    &copy; {{ date('Y') }} <strong>J-Solution Stock System</strong>. All rights reserved.
+    &copy; {{ date('Y') }} <strong>JTECH Systems</strong>. All rights reserved.
 </footer>
 @endsection
 

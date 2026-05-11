@@ -6,10 +6,13 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\TenantSalesController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\StockReconciliationController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 // MASTER ADMIN ROUTES (Superadmin)
 use App\Http\Controllers\Master\AdminController as MasterAdminController;
 use App\Http\Controllers\Master\TenantController;
+
 
 // ADMIN ROUTES (Tenant Admin)
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -20,11 +23,14 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\PurchaseController;
 use App\Http\Controllers\Admin\TransactionController;
+use App\Http\Controllers\Admin\ServiceController;
 
 
 // USER ROUTES
 use App\Http\Controllers\User\ProductController as UserProductController;
 use App\Http\Controllers\User\ReportController as UserReportController;
+use App\Http\Controllers\Api\MpesaPaymentController;
+use App\Http\Controllers\User\ServiceSaleController;
 use App\Models\Tenant;
 
 // Redirect root to login
@@ -69,6 +75,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::get('/reports/generate', [AdminReportController::class, 'generate'])->name('reports.generate');
     Route::get('/reports/today', [AdminReportController::class, 'today'])->name('reports.today');
     Route::get('/profits', [AdminReportController::class, 'profits'])->name('profits');
+    Route::get('/admin/reports', [AdminReportController::class, 'index'])->name('admin.reports.index');
+
 
 
     // Users (manage tenant users)
@@ -138,8 +146,44 @@ Route::middleware(['auth', 'tenant'])->name('user.')->group(function () {
     Route::post('/expenses', [App\Http\Controllers\User\ExpensesController::class, 'store'])->name('expenses.store');
 });
 
-
+Route::post('/services', [ServiceController::class, 'store'])->name('user.services.store');
+Route::post('/service-sales', [ServiceSaleController::class, 'store'])
+    ->name('user.service-sales.store');
 
 
 // Auth scaffolding routes (Breeze or Fortify)
 require __DIR__.'/auth.php';
+
+Route::post('/mpesa/stk-push', [MpesaPaymentController::class, 'stkPush'])
+    ->name('mpesa.stk.push');
+
+
+Route::prefix('admin')->middleware(['auth'])->group(function () {
+
+    Route::get('/services', [ServiceController::class, 'index'])->name('admin.services.index');
+
+    Route::get('/services/create', [ServiceController::class, 'create'])->name('admin.services.create');
+
+    Route::post('/services/store', [ServiceController::class, 'store'])->name('admin.services.store');
+
+    Route::get('/services/{service}/edit', [ServiceController::class, 'edit'])->name('admin.services.edit');
+
+    Route::put('/services/{service}', [ServiceController::class, 'update'])->name('admin.services.update');
+
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('admin.services.destroy');
+});
+    
+
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
+    ->name('password.request');
+
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])
+    ->name('password.email');
+
+Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])
+    ->name('password.reset');
+
+Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
+    ->name('password.update');
+    
+    

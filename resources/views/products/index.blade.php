@@ -1,5 +1,5 @@
 @extends('layouts.users')
-
+ 
 @section('title', 'Manage Products')
 
 @section('content')
@@ -76,11 +76,6 @@
 <div class="d-flex justify-content-center overflow-auto mb-4">
     <ul class="nav nav-tabs flex-nowrap" id="stockTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="purchase-tab" data-bs-toggle="tab" data-bs-target="#purchase" type="button" role="tab">
-                <i class="bi bi-box-arrow-in-down"></i> Purchases
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
             <button class="nav-link" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab">
                 <i class="bi bi-cash-coin"></i> Sales
             </button>
@@ -88,6 +83,16 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab">
                 <i class="bi bi-wallet2"></i> Expenses
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab">
+                <i class="bi bi-tools"></i> Services
+            </button>
+        </li>
+         <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="purchase-tab" data-bs-toggle="tab" data-bs-target="#purchase" type="button" role="tab">
+                <i class="bi bi-box-arrow-in-down"></i> Purchases
             </button>
         </li>
         <!-- <li class="nav-item" role="presentation">
@@ -100,11 +105,7 @@
 
 <!-- Tabs Content -->
 <div class="tab-content" id="stockTabsContent">
-    <!-- Purchases Tab -->
-    <div class="tab-pane fade show active" id="purchase" role="tabpanel" aria-labelledby="purchase-tab">
-        @include('partials.purchase-card')
-    </div>
-
+    
     <!-- Sales Tab -->
     <div class="tab-pane fade" id="sales" role="tabpanel" aria-labelledby="sales-tab">
         @include('partials.sale-card')
@@ -118,6 +119,14 @@
     <!-- Reports Tab -->
     <div class="tab-pane fade" id="reports" role="tabpanel" aria-labelledby="reports-tab">
         @include('partials.report-card')
+    </div>
+    <!-- Services Tab -->
+    <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
+        @include('partials.service-card')
+    </div>
+    <!-- Purchases Tab -->
+    <div class="tab-pane fade show active" id="purchase" role="tabpanel" aria-labelledby="purchase-tab">
+        @include('partials.purchase-card')
     </div>
 </div>
 @endsection

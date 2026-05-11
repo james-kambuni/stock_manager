@@ -27,6 +27,7 @@ class Kernel extends HttpKernel
         ],
     ];
 
+
     protected $routeMiddleware = [
         'auth'       => \App\Http\Middleware\Authenticate::class,
         'verified'   => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
@@ -35,6 +36,7 @@ class Kernel extends HttpKernel
         'masteradmin' => \App\Http\Middleware\IsMasterAdmin::class,
         'tenantadmin' => \App\Http\Middleware\IsTenantAdmin::class,
         'check.tenant.status' => \App\Http\Middleware\CheckTenantStatus::class,
+        'superadmin' => \App\Http\Middleware\SuperAdminMiddleware::class,
 
     ];
 }

@@ -146,7 +146,7 @@
 
     <div class="center">
         Thank you for your purchase!<br>
-        No returns after 7 days.
+        Goods once sold cannot be reaccepted.
     </div>
 
     <div class="print-btn">

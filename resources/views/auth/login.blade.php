@@ -2,10 +2,11 @@
     <div class="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-md">
             <div class="text-center mb-6">
-                {{-- Replace Laravel logo with your app name or image --}}
-                <h2 class="text-3xl font-extrabold text-gray-900">Welcome Back</h2>
-                <p class="mt-2 text-sm text-gray-600">Sign in to your account</p>
-            </div>
+    <img src="{{ asset('images/logo1.png') }}" alt="Logo" class="w-20 h-20 mx-auto mb-3">
+    
+    <h2 class="text-3xl font-extrabold text-gray-900">Welcome Back</h2>
+    <p class="mt-2 text-sm text-gray-600">Sign in to your account</p>
+</div>
 
             <!-- Session Status -->
             <x-auth-session-status class="mb-4" :status="session('status')" />

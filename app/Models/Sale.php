@@ -15,6 +15,11 @@ class Sale extends Model
         return $this->hasMany(SaleItem::class);
     }
 
+    public function payment()
+{
+    return $this->hasOne(Payment::class);
+}
+
     protected static function booted()
     {
         static::addGlobalScope('tenant', function (Builder $query) {

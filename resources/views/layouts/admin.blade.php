@@ -169,6 +169,9 @@
     <a href="{{ route('admin.products.index') }}" class="{{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
         <i class="fa fa-box"></i> Products
     </a>
+    <a href="{{ route('admin.services.index') }}">
+    <i class="fas fa-tools"></i> Services
+</a>
 
     <a href="{{ route('admin.expenses.index') }}" class="{{ request()->routeIs('admin.expenses.index') ? 'active' : '' }}">
         <i class="fas fa-money-bill-wave"></i> View Expenses
@@ -232,7 +235,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-3 bg-light border-top">
-        @yield('footer', '© ' . date('Y') . ' J-Solutions Ltd. All rights reserved.')
+        @yield('footer', '© ' . date('Y') . ' Jtech Systems. All rights reserved.')
     </footer>
 </div>
 

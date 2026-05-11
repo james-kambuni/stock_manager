@@ -1,148 +1,166 @@
-<div class="card shadow rounded-4 border-0 mb-4">
-    <div class="card-header bg-success text-white fw-bold">
-        <i class="bi bi-cart-check-fill me-1"></i> New Multi-Sale
-    </div>
-    <div class="card-body">
-        <form id="sale-form" action="{{ route('user.products.sell.multiple') }}" method="POST">
-            @csrf
-            <div id="sale-items">
-                <div class="row g-3 align-items-end border-bottom pb-3 mb-3 sale-item">
-                    <div class="col-md-4">
-                        <label class="form-label"><i class="bi bi-box-seam me-1"></i> Product</label>
-                        <select name="products[0][product_id]" class="form-select product-select" required>
-                            <option value="">-- Select Product --</option>
-                            @foreach($products as $product)
-                                <option value="{{ $product->id }}" data-price="{{ $product->unit_price }}">
-                                    {{ $product->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label"><i class="bi bi-123 me-1"></i> Quantity</label>
-                        <input type="number" name="products[0][quantity]" class="form-control" required min="1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label"><i class="bi bi-currency-dollar me-1"></i> Unit Price</label>
-                        <input type="number" name="products[0][unit_price]" class="form-control unit-price" step="0.01" required min="0">
-                        <input type="hidden" class="default-price" name="products[0][default_price]">
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="button" class="btn btn-outline-danger btn-sm remove-product" disabled>
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+<div class="container mt-4">
+    <div class="card shadow rounded-4">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-cart-check me-2"></i> Make a Sale
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <form id="sale-form" method="POST" action="{{ route('user.products.sell.multiple') }}">
+                @csrf
+
+                {{-- Product Rows --}}
+                <div id="product-rows">
+                    <div class="row mb-3 sale-item">
+                        <div class="col-md-5 col-12 mb-2">
+                            <label>Product</label>
+                            <select name="products[0][product_id]" class="form-select product-select" required>
+                                <option value="">-- Select Product --</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}" data-price="{{ $product->unit_price }}">
+                                        {{ $product->name }} - Ksh {{ $product->unit_price }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-6 mb-2">
+                            <label>Quantity</label>
+                            <input type="number" name="products[0][quantity]" class="form-control quantity-input" min="1" required>
+                        </div>
+
+                        <div class="col-md-3 col-6 mb-2">
+                            <label>Unit Price</label>
+                            <input type="number" name="products[0][unit_price]" class="form-control unit-price-input" step="0.01" required>
+                        </div>
+
+                        <div class="col-md-1 col-12 d-flex align-items-end justify-content-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-product px-2">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="d-flex justify-content-between align-items-center mt-3">
-                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" onclick="addSaleItem()">
-                    <i class="bi bi-plus-circle me-1"></i> Add Product
-                </button>
+                {{-- Add Product --}}
+                <div class="mb-3">
+                    <button type="button" id="add-product" class="btn btn-outline-primary btn-sm rounded-pill">
+                        <i class="bi bi-plus-circle me-1"></i> Add Product
+                    </button>
+                </div>
 
-                <button type="submit" class="btn btn-success btn-sm rounded-pill px-4">
-                    <i class="bi bi-check-circle me-1"></i> Submit
-                </button>
-            </div>
-        </form>
+                {{-- Payment Method --}}
+                <div class="mb-3">
+                    <label><i class="bi bi-credit-card me-1"></i> Payment Method</label>
+                    <select id="payment-method" name="payment_method" class="form-select" required>
+                        <option value="">-- Choose Payment Method --</option>
+                        <option value="cash">Cash</option>
+                        <option value="mpesa">M-Pesa</option>
+                    </select>
+                </div>
+
+                {{-- Total --}}
+                <div class="mb-3 text-end">
+                    <h5>Total: Ksh <span id="total-amount">0.00</span></h5>
+                </div>
+
+                {{-- Submit --}}
+                <div class="text-end">
+                    <button type="submit" id="submit-sale" class="btn btn-success rounded-pill px-4">
+                        <i class="bi bi-check-circle me-1"></i> Submit
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-@push('scripts')
+{{-- Script --}}
 <script>
-    let itemIndex = 1;
+document.addEventListener('DOMContentLoaded', () => {
+    let rowIndex = 1;
 
-    function addSaleItem() {
-        const container = document.getElementById('sale-items');
-
-        const newRow = document.createElement('div');
-        newRow.classList.add('row', 'g-3', 'align-items-end', 'border-bottom', 'pb-3', 'mb-3', 'sale-item');
-
-        newRow.innerHTML = `
-            <div class="col-md-4">
-                <label class="form-label"><i class="bi bi-box-seam me-1"></i> Product</label>
-                <select name="products[${itemIndex}][product_id]" class="form-select product-select" required>
-                    <option value="">-- Select Product --</option>
-                    @foreach($products as $product)
-                        <option value="{{ $product->id }}" data-price="{{ $product->unit_price }}">
-                            {{ $product->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label"><i class="bi bi-123 me-1"></i> Quantity</label>
-                <input type="number" name="products[${itemIndex}][quantity]" class="form-control" required min="1">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label"><i class="bi bi-currency-dollar me-1"></i> Unit Price</label>
-                <input type="number" name="products[${itemIndex}][unit_price]" class="form-control unit-price" step="0.01" required min="0">
-                <input type="hidden" class="default-price" name="products[${itemIndex}][default_price]">
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="button" class="btn btn-outline-danger btn-sm remove-product">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-        `;
-
-        container.appendChild(newRow);
-        itemIndex++;
-    }
-
-    // Autofill price when product is selected
-    document.addEventListener('change', function (e) {
-        if (e.target.classList.contains('product-select')) {
-            const selected = e.target.selectedOptions[0];
-            const unitPrice = selected.getAttribute('data-price');
-            const row = e.target.closest('.sale-item');
-            const priceInput = row.querySelector('.unit-price');
-            const defaultInput = row.querySelector('.default-price');
-
-            if (unitPrice) {
-                priceInput.value = parseFloat(unitPrice).toFixed(2);
-                defaultInput.value = parseFloat(unitPrice).toFixed(2);
-            } else {
-                priceInput.value = '';
-                defaultInput.value = '';
-            }
-        }
-    });
-
-    // Remove row
-    document.addEventListener('click', function (e) {
-        if (e.target.closest('.remove-product')) {
-            const allRows = document.querySelectorAll('.sale-item');
-            if (allRows.length > 1) {
-                e.target.closest('.sale-item').remove();
-            }
-        }
-    });
-
-    // Confirm discount before submit
-    document.getElementById('sale-form').addEventListener('submit', function (e) {
-        const rows = document.querySelectorAll('.sale-item');
-        let changes = [];
-
-        rows.forEach(row => {
-            const priceInput = row.querySelector('.unit-price');
-            const defaultInput = row.querySelector('.default-price');
-
-            const entered = parseFloat(priceInput.value);
-            const original = parseFloat(defaultInput.value);
-
-            if (!isNaN(entered) && !isNaN(original) && entered !== original) {
-                const productName = row.querySelector('.product-select').selectedOptions[0]?.textContent.trim() || 'Unknown Product';
-                changes.push(`${productName}: KES ${original.toFixed(2)} → KES ${entered.toFixed(2)}`);
-            }
+    function bindRowEvents(row) {
+        row.querySelector('.product-select').addEventListener('change', function () {
+            const price = this.options[this.selectedIndex].getAttribute('data-price') || 0;
+            row.querySelector('.unit-price-input').value = price;
+            calculateTotalAmount();
         });
 
-        if (changes.length > 0) {
-            const message = `The following products have a modified price:\n\n${changes.join('\n')}\n\nDo you want to proceed with the discount?`;
-            if (!confirm(message)) {
-                e.preventDefault();
+        row.querySelector('.quantity-input').addEventListener('input', calculateTotalAmount);
+        row.querySelector('.unit-price-input').addEventListener('input', calculateTotalAmount);
+    }
+
+    bindRowEvents(document.querySelector('.sale-item'));
+
+    document.getElementById('add-product').addEventListener('click', () => {
+        const row = document.querySelector('.sale-item').cloneNode(true);
+        row.querySelectorAll('input, select').forEach(el => {
+            el.name = el.name.replace(/\[\d+\]/, `[${rowIndex}]`);
+            el.value = '';
+        });
+        document.getElementById('product-rows').appendChild(row);
+        bindRowEvents(row);
+        rowIndex++;
+    });
+
+    document.addEventListener('click', e => {
+        if (e.target.closest('.remove-product')) {
+            const rows = document.querySelectorAll('.sale-item');
+            if (rows.length > 1) {
+                e.target.closest('.sale-item').remove();
+                calculateTotalAmount();
+            } else {
+                alert('At least one product is required.');
             }
         }
     });
+
+    function calculateTotalAmount() {
+        let total = 0;
+        document.querySelectorAll('.sale-item').forEach(row => {
+            const qty = parseFloat(row.querySelector('.quantity-input').value) || 0;
+            const price = parseFloat(row.querySelector('.unit-price-input').value) || 0;
+            total += qty * price;
+        });
+        document.getElementById('total-amount').innerText = total.toFixed(2);
+        return total.toFixed(2);
+    }
+
+    document.getElementById('submit-sale').addEventListener('click', function (e) {
+        const method = document.getElementById('payment-method').value;
+        const amount = calculateTotalAmount();
+
+        if (!method) {
+            e.preventDefault();
+            return alert('Select payment method');
+        }
+
+        if (method === 'mpesa') {
+            e.preventDefault();
+            const phone = prompt('Enter customer phone number (07XXXXXXXX):');
+            if (!/^07\d{8}$/.test(phone)) return alert('Invalid phone number.');
+
+            fetch('{{ route("mpesa.stk.push") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ phone, amount })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('STK push sent. Waiting for confirmation...');
+                    setTimeout(() => document.getElementById('sale-form').submit(), 7000);
+                } else {
+                    alert(data.message || 'M-Pesa error');
+                }
+            })
+            .catch(() => alert('M-Pesa request failed.'));
+        }
+    });
+});
 </script>
-@endpush

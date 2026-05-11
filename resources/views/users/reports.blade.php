@@ -3,76 +3,111 @@
 @section('title', 'Reports')
 
 @section('content')
-    <h4>{{ ucfirst($reportType) }} Report</h4>
 
-    @if ($reportType === 'inventory')
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Stock</th>
-                    <th>Cost Price</th>
-                    <th>Selling Price</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($products as $product)
-                    <tr>
-                        <td>{{ $product->name }}</td>
-                        <td>{{ $product->stock }}</td>
-                        <td>{{ $product->cost_price }}</td>
-                        <td>{{ $product->selling_price }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="4">No products found.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+<h4 class="mb-3">{{ ucfirst($reportType) }} Report</h4>
 
-    @elseif ($reportType === 'sales')
-        <table class="table table-bordered table-striped">
-            <thead>
+{{-- INVENTORY --}}
+@if ($reportType === 'inventory')
+    <table class="table table-bordered table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Stock</th>
+                <th>Cost Price</th>
+                <th>Selling Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($reportData as $product)
                 <tr>
-                    <th>Product</th>
-                    <th>Quantity Sold</th>
-                    <th>Sold At</th>
+                    <td>{{ $product->name }}</td>
+                    <td>{{ $product->stock }}</td>
+                    <td>Ksh {{ number_format($product->cost_price, 2) }}</td>
+                    <td>Ksh {{ number_format($product->selling_price, 2) }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @forelse ($sales as $sale)
-                    <tr>
-                        <td>{{ $sale->product->name }}</td>
-                        <td>{{ $sale->quantity }}</td>
-                        <td>{{ $sale->created_at->format('Y-m-d') }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="3">No sales found.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+            @empty
+                <tr><td colspan="4">No products found.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
 
-    @elseif ($reportType === 'purchases')
-        <table class="table table-bordered table-striped">
-            <thead>
+{{-- SALES --}}
+@elseif ($reportType === 'sales')
+    <table class="table table-bordered table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($reportData as $sale)
                 <tr>
-                    <th>Product</th>
-                    <th>Quantity Purchased</th>
-                    <th>Cost Price</th>
-                    <th>Purchased At</th>
+                    <td>{{ $sale->product->name ?? 'N/A' }}</td>
+                    <td>{{ $sale->quantity }}</td>
+                    <td>Ksh {{ number_format($sale->unit_price, 2) }}</td>
+                    <td>Ksh {{ number_format($sale->quantity * $sale->unit_price, 2) }}</td>
+                    <td>{{ $sale->created_at->format('Y-m-d') }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @forelse ($purchases as $purchase)
-                    <tr>
-                        <td>{{ $purchase->product->name }}</td>
-                        <td>{{ $purchase->quantity }}</td>
-                        <td>{{ $purchase->cost_price }}</td>
-                        <td>{{ $purchase->created_at->format('Y-m-d') }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="4">No purchases found.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    @endif
+            @empty
+                <tr><td colspan="5">No sales found.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+
+{{-- PURCHASES --}}
+@elseif ($reportType === 'purchases')
+    <table class="table table-bordered table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Unit Cost</th>
+                <th>Total</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($reportData as $purchase)
+                <tr>
+                    <td>{{ $purchase->product->name ?? 'N/A' }}</td>
+                    <td>{{ $purchase->quantity }}</td>
+                    <td>Ksh {{ number_format($purchase->unit_cost, 2) }}</td>
+                    <td>Ksh {{ number_format($purchase->quantity * $purchase->unit_cost, 2) }}</td>
+                    <td>{{ $purchase->created_at->format('Y-m-d') }}</td>
+                </tr>
+            @empty
+                <tr><td colspan="5">No purchases found.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+
+{{-- SERVICES (ADD THIS) --}}
+@elseif ($reportType === 'services')
+    <table class="table table-bordered table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Service</th>
+                <th>Amount</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($reportData as $service)
+                <tr>
+                    <td>{{ $service->service->name ?? 'N/A' }}</td>
+                    <td>Ksh {{ number_format($service->amount, 2) }}</td>
+                    <td>{{ \Carbon\Carbon::parse($service->date)->format('Y-m-d') }}</td>
+                </tr>
+            @empty
+                <tr><td colspan="3">No services found.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+
+@endif
+
 @endsection

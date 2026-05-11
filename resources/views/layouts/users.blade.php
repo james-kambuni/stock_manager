@@ -201,7 +201,7 @@
     <!-- Footer -->
     <footer>
         <div class="container">
-            <small>&copy; {{ date('Y') }} J-solution Stock System. All rights reserved.</small>
+            <small>&copy; {{ date('Y') }} JTECH Systems. All rights reserved.</small>
         </div>
     </footer>
 

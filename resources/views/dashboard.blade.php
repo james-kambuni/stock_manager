@@ -193,7 +193,6 @@ a:hover .arrow-icon small {
         </div>
     </div>
 </div>
-
 <style>
     .bg-gradient-primary {
         background: linear-gradient(90deg, #0d6efd, #198754);

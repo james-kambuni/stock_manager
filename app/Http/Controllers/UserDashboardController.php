@@ -7,67 +7,76 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\User;
 use App\Models\SaleItem;
+use App\Models\Service;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class UserDashboardController extends Controller
 {
     public function index()
-{
-    $tenantId = auth()->user()->tenant_id;
+    {
+        $tenantId = auth()->user()->tenant_id;
 
-    // ✅ Show welcome message only once per session
-    if (!session()->has('welcome_shown')) {
-        session(['welcome_shown' => true]);
-    }
+        // ================= SERVICES =================
+        $services = Service::where('tenant_id', $tenantId)->get();
 
-    // Tenant-specific data
-    $productCount = Product::where('tenant_id', $tenantId)->count();
-    $products = Product::where('tenant_id', $tenantId)->get();
+        // ================= PRODUCTS =================
+        $productCount = Product::where('tenant_id', $tenantId)->count();
+        $products = Product::where('tenant_id', $tenantId)->get();
 
-    $salesToday = SaleItem::whereDate('sale_items.created_at', today())
-        ->whereHas('sale', function ($query) use ($tenantId) {
-            $query->where('tenant_id', $tenantId);
-        })
-        ->sum('quantity');
-
-    $purchasesToday = Purchase::where('tenant_id', $tenantId)
-        ->whereDate('created_at', today())
-        ->sum('quantity');
-
-    $userCount = User::where('tenant_id', $tenantId)->count();
-
-    // Profits for last 4 months
-    $months = [];
-    $profits = [];
-
-    for ($i = 3; $i >= 0; $i--) {
-        $month = now()->subMonths($i);
-        $label = $month->format('M');
-
-        $totalSales = SaleItem::whereMonth('sale_items.created_at', $month->month)
-            ->whereYear('sale_items.created_at', $month->year)
+        // ================= TODAY SALES =================
+        $salesToday = SaleItem::whereDate('created_at', today())
             ->whereHas('sale', function ($query) use ($tenantId) {
                 $query->where('tenant_id', $tenantId);
             })
-            ->sum(DB::raw('unit_price * quantity'));
+            ->sum('quantity');
 
-        $totalPurchases = Purchase::where('tenant_id', $tenantId)
-            ->whereMonth('created_at', $month->month)
-            ->whereYear('created_at', $month->year)
-            ->sum(DB::raw('unit_cost * quantity'));
+        // ================= TODAY PURCHASES (FIXED) =================
+        $purchasesToday = Purchase::where('tenant_id', $tenantId)
+            ->whereDate('created_at', today())
+            ->sum('quantity');
 
-        $months[] = $label;
-        $profits[] = round($totalSales - $totalPurchases, 2);
+        // ================= USERS =================
+        $userCount = User::where('tenant_id', $tenantId)->count();
+
+        // ================= PROFIT CHART =================
+        $months = [];
+        $profits = [];
+
+        for ($i = 3; $i >= 0; $i--) {
+
+            $month = Carbon::now()->subMonths($i);
+            $start = $month->copy()->startOfMonth();
+            $end = $month->copy()->endOfMonth();
+
+            // ================= PRODUCT PROFIT =================
+            $productProfit = SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
+                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->where('sales.tenant_id', $tenantId)
+                ->whereBetween('sale_items.created_at', [$start, $end])
+                ->sum(DB::raw('(sale_items.unit_price - products.cost_price) * sale_items.quantity'));
+
+            // ================= SERVICE PROFIT =================
+            $serviceProfit = DB::table('service_sales')
+                ->where('tenant_id', $tenantId)
+                ->whereBetween('created_at', [$start, $end])
+                ->sum('amount');
+
+            $months[] = $month->format('M');
+
+            // ================= FINAL PROFIT =================
+            $profits[] = round($productProfit + $serviceProfit, 2);
+        }
+
+        return view('dashboard', compact(
+            'productCount',
+            'products',
+            'salesToday',
+            'purchasesToday',
+            'userCount',
+            'months',
+            'profits',
+            'services'
+        ));
     }
-
-    return view('dashboard', compact(
-        'productCount',
-        'products',
-        'salesToday',
-        'purchasesToday',
-        'userCount',
-        'months',
-        'profits'
-    ));
-}
 }

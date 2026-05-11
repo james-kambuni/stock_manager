@@ -5,226 +5,262 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\StockBatch;
 use App\Models\Expense;
 use App\Models\Purchase;
+use App\Models\ServiceSale;
 use Carbon\Carbon;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
-    public function index(Request $request)
+    // ================= TODAY REPORT =================
+    public function today()
     {
-        $reportType = $request->query('type', 'inventory');
-        $from = $request->query('from');
-        $to = $request->query('to');
         $tenantId = auth()->user()->tenant_id;
+        $today = Carbon::today();
 
-        $products = $sales = $purchases = $inventoryData = [];
-        $totalExpenses = 0;
+        $sales = SaleItem::with(['product', 'sale'])
+            ->whereHas('sale', function ($q) use ($tenantId, $today) {
+                $q->where('tenant_id', $tenantId)
+                  ->whereDate('sale_date', $today);
+            })
+            ->get();
 
-        $fromDate = $from ? Carbon::parse($from)->startOfDay() : now()->startOfMonth();
-        $toDate = $to ? Carbon::parse($to)->endOfDay() : now();
+        $purchases = Purchase::with('product')
+            ->where('tenant_id', $tenantId)
+            ->whereDate('created_at', $today)
+            ->get();
 
-        if ($reportType === 'inventory') {
-            $inventoryData = $this->calculateInventoryData($fromDate, $toDate);
-            $totalExpenses = Expense::where('tenant_id', $tenantId)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->sum('amount');
+        $expenses = Expense::where('tenant_id', $tenantId)
+            ->whereDate('created_at', $today)
+            ->get();
 
-        } elseif ($reportType === 'sales') {
-            $sales = SaleItem::with('product', 'sale')
-                ->whereHas('sale', fn($q) => $q->where('tenant_id', $tenantId))
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->latest()->get();
+        $serviceSales = ServiceSale::where('tenant_id', $tenantId)
+            ->whereDate('created_at', $today)
+            ->get();
 
-        } elseif ($reportType === 'purchases') {
-            $purchases = Purchase::with('product')
-                ->where('tenant_id', $tenantId)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->latest()->get();
-        }
+        // ================= TOTALS =================
+        $totalSales = $sales->sum(fn($s) => $s->quantity * $s->unit_price);
 
-        return view('admin.reports.index', compact(
-            'reportType', 'products', 'sales', 'purchases', 'inventoryData',
-            'totalExpenses', 'from', 'to'
+        $totalServiceSales = $serviceSales->sum('amount');
+
+        $totalPurchases = $purchases->sum(fn($p) => $p->quantity * $p->unit_cost);
+
+        $totalExpenses = $expenses->sum('amount');
+
+        // ================= PROFITS =================
+        $productProfit = $sales->sum(function ($s) {
+            return ($s->unit_price - ($s->product->cost_price ?? 0)) * $s->quantity;
+        });
+
+        $serviceProfit = $totalServiceSales;
+
+        $grossProfit = $productProfit + $serviceProfit;
+
+        $netProfit = $grossProfit - $totalExpenses;
+
+        return view('admin.reports.today', compact(
+            'sales',
+            'purchases',
+            'expenses',
+            'serviceSales',
+            'totalSales',
+            'totalServiceSales',
+            'totalPurchases',
+            'totalExpenses',
+            'productProfit',
+            'serviceProfit',
+            'grossProfit',
+            'netProfit'
         ));
     }
 
-    private function calculateInventoryData($fromDate, $toDate)
-{
-    $tenantId = auth()->user()->tenant_id;
-    $products = Product::where('tenant_id', $tenantId)->get();
-    $inventoryData = [];
+    // ================= MONTHLY REPORT =================
+    public function monthly()
+    {
+        $tenantId = auth()->user()->tenant_id;
 
-    foreach ($products as $product) {
-        // Get latest Purchase before or on fromDate
-        $latestPurchase = Purchase::where('product_id', $product->id)
-            ->where('tenant_id', $tenantId)
-            ->whereDate('created_at', '<=', $fromDate)
-            ->orderByDesc('created_at')
-            ->first();
+        $start = Carbon::now()->startOfMonth()->startOfDay();
+        $end = Carbon::now()->endOfMonth()->endOfDay();
 
-        // Get latest SaleItem before or on fromDate using Sale's created_at
-        $latestSaleItem = SaleItem::where('product_id', $product->id)
-            ->whereHas('sale', function ($q) use ($tenantId, $fromDate) {
+        $sales = SaleItem::with(['product', 'sale'])
+            ->whereHas('sale', function ($q) use ($tenantId, $start, $end) {
                 $q->where('tenant_id', $tenantId)
-                  ->whereDate('created_at', '<=', $fromDate);
+                  ->whereBetween('sale_date', [$start, $end]);
             })
-            ->with(['sale' => function ($q) {
-                $q->select('id', 'created_at'); // required for ordering
-            }])
-            ->get()
-            ->sortByDesc(fn($item) => $item->sale->created_at ?? now())
-            ->first();
+            ->get();
 
-        // Pick latest of the two based on created_at
-        $previousStock = 0;
+        $serviceSales = ServiceSale::where('tenant_id', $tenantId)
+            ->whereBetween('created_at', [$start, $end])
+            ->get();
 
-        if ($latestPurchase && $latestSaleItem) {
-            $previousStock = $latestPurchase->created_at > $latestSaleItem->sale->created_at
-                ? $latestPurchase->previous_stock
-                : $latestSaleItem->previous_stock;
-        } elseif ($latestPurchase) {
-            $previousStock = $latestPurchase->previous_stock;
-        } elseif ($latestSaleItem) {
-            $previousStock = $latestSaleItem->previous_stock;
-        }
-
-        // Get purchases in range
-        $purchased = Purchase::where('product_id', $product->id)
+        $purchases = Purchase::with('product')
             ->where('tenant_id', $tenantId)
-            ->whereBetween('created_at', [$fromDate, $toDate])
-            ->sum('quantity');
+            ->whereBetween('created_at', [$start, $end])
+            ->get();
 
-        // Get sales in range
-        $sold = SaleItem::where('product_id', $product->id)
-            ->whereHas('sale', function ($q) use ($tenantId, $fromDate, $toDate) {
-                $q->where('tenant_id', $tenantId)
-                  ->whereBetween('created_at', [$fromDate, $toDate]);
-            })
-            ->sum('quantity');
+        $expenses = Expense::where('tenant_id', $tenantId)
+            ->whereBetween('created_at', [$start, $end])
+            ->get();
 
-        $inventoryData[] = [
-            'name' => $product->name,
-            'previous_stock' => $previousStock,
-            'purchased' => $purchased,
-            'sold' => $sold,
-            'current_stock' => $product->stock,
-            'cost_price' => $product->cost_price,
-            'selling_price' => $product->selling_price,
-        ];
+        // ================= TOTALS =================
+        $totalSales = $sales->sum(fn($s) => $s->quantity * $s->unit_price);
+
+        $totalServiceSales = $serviceSales->sum('amount');
+
+        $totalPurchases = $purchases->sum(fn($p) => $p->quantity * $p->unit_cost);
+
+        $totalExpenses = $expenses->sum('amount');
+
+        // ================= PROFITS =================
+        $productProfit = $sales->sum(function ($s) {
+            return ($s->unit_price - ($s->product->cost_price ?? 0)) * $s->quantity;
+        });
+
+        $serviceProfit = $totalServiceSales;
+
+        $netProfit = ($productProfit + $serviceProfit) - $totalExpenses;
+
+        return view('admin.reports.monthly', compact(
+            'sales',
+            'purchases',
+            'expenses',
+            'serviceSales',
+            'totalSales',
+            'totalServiceSales',
+            'totalPurchases',
+            'totalExpenses',
+            'productProfit',
+            'serviceProfit',
+            'netProfit'
+        ));
     }
 
-    return $inventoryData;
-}
-
-    public function export(Request $request)
+    // ================= MAIN REPORT PAGE =================
+    public function index(Request $request)
     {
-        $reportType = $request->type;
+        $tenantId = auth()->user()->tenant_id;
+
+        $reportType = $request->type ?? 'inventory';
+
         $from = $request->from;
         $to = $request->to;
-        $tenant = auth()->user()->tenant;
 
-        $fromDate = Carbon::parse($from)->startOfDay();
-        $toDate = Carbon::parse($to)->endOfDay();
+        $fromDate = $from
+            ? Carbon::parse($from)->startOfDay()
+            : now()->startOfMonth()->startOfDay();
 
-        $data = [
-            'reportType' => $reportType,
-            'from' => $from,
-            'to' => $to,
-            'tenant' => $tenant,
-        ];
+        $toDate = $to
+            ? Carbon::parse($to)->endOfDay()
+            : now()->endOfMonth()->endOfDay();
 
-        if ($reportType === 'inventory') {
-            $data['inventoryData'] = $this->calculateInventoryData($fromDate, $toDate);
-        } elseif ($reportType === 'sales') {
-            $data['sales'] = SaleItem::with('product', 'sale')
-                ->whereHas('sale', fn($q) => $q->where('tenant_id', $tenant->id))
+        // ================= INVENTORY =================
+        $inventoryData = $this->calculateInventoryData($fromDate, $toDate);
+
+        // ================= SALES =================
+        $sales = SaleItem::with(['product', 'sale'])
+            ->whereHas('sale', function ($q) use ($tenantId, $fromDate, $toDate) {
+
+                $q->where('tenant_id', $tenantId)
+                  ->whereBetween('sale_date', [$fromDate, $toDate]);
+
+            })
+            ->get();
+
+        // ================= PURCHASES =================
+        $purchases = Purchase::with('product')
+            ->where('tenant_id', $tenantId)
+            ->whereBetween('created_at', [$fromDate, $toDate])
+            ->get();
+
+        return view('admin.reports.index', compact(
+            'reportType',
+            'inventoryData',
+            'sales',
+            'purchases',
+            'from',
+            'to'
+        ));
+    }
+
+    // ================= INVENTORY CALCULATION =================
+    private function calculateInventoryData($fromDate, $toDate)
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        $products = Product::where('tenant_id', $tenantId)->get();
+
+        $inventoryData = [];
+
+        foreach ($products as $product) {
+
+            // ================= PURCHASED IN RANGE =================
+            $purchased = Purchase::where('tenant_id', $tenantId)
+                ->where('product_id', $product->id)
                 ->whereBetween('created_at', [$fromDate, $toDate])
-                ->get();
-        } elseif ($reportType === 'purchases') {
-            $data['purchases'] = Purchase::with('product')
-                ->where('tenant_id', $tenant->id)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->get();
+                ->sum('quantity');
+
+            // ================= SOLD IN RANGE =================
+            $sold = SaleItem::where('product_id', $product->id)
+                ->whereHas('sale', function ($q) use ($tenantId, $fromDate, $toDate) {
+
+                    $q->where('tenant_id', $tenantId)
+                      ->whereBetween('sale_date', [$fromDate, $toDate]);
+
+                })
+                ->sum('quantity');
+
+            // ================= PREVIOUS STOCK =================
+            $previousStock = ($product->stock - $purchased) + $sold;
+
+            $inventoryData[] = [
+                'name' => $product->name,
+                'previous_stock' => $previousStock,
+                'purchased' => $purchased,
+                'sold' => $sold,
+                'current_stock' => $product->stock,
+                'cost_price' => $product->cost_price ?? 0,
+                'selling_price' => $product->selling_price ?? 0,
+            ];
         }
 
-        $pdf = Pdf::loadView('admin.reports.pdf', $data)->setPaper('A4', 'portrait');
-        return $pdf->download("{$reportType}_report.pdf");
+        return $inventoryData;
     }
 
+    // ================= PROFITS REPORT =================
     public function profits()
-{
-    $tenantId = auth()->user()->tenant_id;
-    $profits = [];
+    {
+        $tenantId = auth()->user()->tenant_id;
 
-    // Monthly Gross Profit for past 4 months
-    for ($i = 3; $i >= 0; $i--) {
-        $month = now()->subMonths($i);
-        $monthName = $month->format('F');
+        $profits = collect();
 
-        $monthlyGrossProfit = DB::table('sale_items')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->where('sales.tenant_id', $tenantId)
-            ->whereMonth('sale_items.created_at', $month->month)
-            ->whereYear('sale_items.created_at', $month->year)
-            ->sum(DB::raw('(sale_items.unit_price - products.cost_price) * sale_items.quantity'));
+        for ($i = 3; $i >= 0; $i--) {
 
-        $profits[] = [
-            'month' => $monthName,
-            'profit' => $monthlyGrossProfit,
-        ];
+            $month = now()->subMonths($i);
+
+            $start = $month->copy()->startOfMonth();
+            $end = $month->copy()->endOfMonth();
+
+            $profit = DB::table('sale_items')
+                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->join('products', 'sale_items.product_id', '=', 'products.id')
+                ->where('sales.tenant_id', $tenantId)
+                ->whereBetween('sales.sale_date', [$start, $end])
+                ->sum(DB::raw('(sale_items.unit_price - products.cost_price) * sale_items.quantity'));
+
+            $profits->push([
+                'month' => $month->format('F'),
+                'profit' => $profit,
+            ]);
+        }
+
+        return view('admin.reports.profits', compact('profits'));
     }
 
-    // Top products profit - Last 1 Month
-    $monthlyTopProducts = DB::table('sale_items')
-        ->join('products', 'sale_items.product_id', '=', 'products.id')
-        ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-        ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
-        ->where('sales.tenant_id', $tenantId)
-        ->where('sale_items.created_at', '>=', Carbon::now()->subMonth())
-        ->groupBy('products.name')
-        ->orderByDesc('profit')
-        ->take(10)
-        ->get();
-
-    // Top products profit - Last 1 Week
-    $weeklyTopProducts = DB::table('sale_items')
-        ->join('products', 'sale_items.product_id', '=', 'products.id')
-        ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-        ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
-        ->where('sales.tenant_id', $tenantId)
-        ->where('sale_items.created_at', '>=', Carbon::now()->subWeek())
-        ->groupBy('products.name')
-        ->orderByDesc('profit')
-        ->take(10)
-        ->get();
-
-    // Top products profit - Yesterday
-    $yesterdayTopProducts = DB::table('sale_items')
-        ->join('products', 'sale_items.product_id', '=', 'products.id')
-        ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-        ->select('products.name as product', DB::raw('SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity) as profit'))
-        ->where('sales.tenant_id', $tenantId)
-        ->whereDate('sale_items.created_at', Carbon::yesterday())
-        ->groupBy('products.name')
-        ->orderByDesc('profit')
-        ->take(10)
-        ->get();
-
-    return view('admin.reports.profits', compact(
-        'profits',
-        'monthlyTopProducts',
-        'weeklyTopProducts',
-        'yesterdayTopProducts'
-    ));
-}
-public function expiryReport()
+    // ================= EXPIRY REPORT =================
+    public function expiryReport()
     {
         $tenantId = auth()->user()->tenant_id;
 
@@ -234,116 +270,5 @@ public function expiryReport()
             ->get();
 
         return view('admin.reports.expiry', compact('batches'));
-    }
-
-public function today()
-{
-    $tenantId = auth()->user()->tenant_id;
-    $today = \Carbon\Carbon::today();
-
-    $sales = SaleItem::with(['product', 'sale'])
-        ->whereDate('created_at', $today)
-        ->whereHas('sale', fn($q) => $q->where('tenant_id', $tenantId))
-        ->get();
-
-    $purchases = Purchase::with('product')
-        ->whereDate('created_at', $today)
-        ->where('tenant_id', $tenantId)
-        ->get();
-
-    $expenses = Expense::where('tenant_id', $tenantId)
-        ->whereDate('date', $today)
-        ->get();
-
-    $totalSales = $sales->sum(fn($s) => $s->quantity * $s->unit_price);
-    $totalPurchases = $purchases->sum(fn($p) => $p->quantity * $p->unit_cost);
-    $totalExpenses = $expenses->sum('amount');
-
-    $grossProfit = $sales->sum(fn($s) => ($s->unit_price - ($s->product->cost_price ?? 0)) * $s->quantity);
-    $netProfit = $grossProfit - $totalExpenses;
-
-    return view('admin.reports.today', compact(
-        'sales', 'purchases', 'expenses',
-        'totalSales', 'totalPurchases', 'grossProfit', 'totalExpenses', 'netProfit'
-    ));
-}
-
-    public function monthly()
-{
-    $tenantId = auth()->user()->tenant_id;
-    $startOfMonth = \Carbon\Carbon::now()->startOfMonth();
-    $endOfMonth = \Carbon\Carbon::now()->endOfMonth();
-
-    $sales = \App\Models\SaleItem::with(['product', 'sale'])
-        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-        ->whereHas('sale', fn($q) => $q->where('tenant_id', $tenantId))
-        ->get();
-
-    $purchases = \App\Models\Purchase::with('product')
-        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-        ->where('tenant_id', $tenantId)
-        ->get();
-
-    $expenses = \App\Models\Expense::where('tenant_id', $tenantId)
-        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-        ->get();
-
-    $totalSales = $sales->sum(fn($s) => $s->quantity * $s->unit_price);
-    $totalPurchases = $purchases->sum(fn($p) => $p->quantity * $p->unit_cost);
-    $totalExpenses = $expenses->sum('amount');
-
-    $grossProfit = $sales->sum(function ($s) {
-        $cost = optional($s->product)->cost_price ?? 0;
-        return ($s->unit_price - $cost) * $s->quantity;
-    });
-
-    $netProfit = $grossProfit - $totalExpenses;
-
-    return view('admin.reports.monthly', compact(
-        'sales', 'purchases', 'expenses',
-        'totalSales', 'totalPurchases', 'grossProfit', 'totalExpenses', 'netProfit'
-    ));
-}
-
-
-    public function generate(Request $request)
-    {
-        $tenantId = auth()->user()->tenant_id;
-        $start = Carbon::parse($request->start_date)->startOfDay();
-        $end = Carbon::parse($request->end_date)->endOfDay();
-
-        switch ($request->type) {
-            case 'sales':
-                $data = SaleItem::with('product', 'sale')
-                    ->whereBetween('created_at', [$start, $end])
-                    ->whereHas('sale', function ($q) use ($tenantId) {
-                        $q->where('tenant_id', $tenantId);
-                    })
-                    ->get();
-                break;
-
-            case 'purchases':
-                $data = Purchase::with('product')
-                    ->whereBetween('created_at', [$start, $end])
-                    ->where('tenant_id', $tenantId)
-                    ->get();
-                break;
-
-            case 'inventory':
-                $data = Product::where('tenant_id', $tenantId)->get();
-                break;
-
-            default:
-                $data = [];
-        }
-
-        return response()->json($data);
-    }
-
-    public function userReports()
-    {
-        $tenantId = auth()->user()->tenant_id;
-        $products = Product::where('tenant_id', $tenantId)->get();
-        return view('users.reports', compact('products'));
     }
 }
