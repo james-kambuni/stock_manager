@@ -75,7 +75,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::get('/reports/generate', [AdminReportController::class, 'generate'])->name('reports.generate');
     Route::get('/reports/today', [AdminReportController::class, 'today'])->name('reports.today');
     Route::get('/profits', [AdminReportController::class, 'profits'])->name('profits');
-    Route::get('/admin/reports', [AdminReportController::class, 'index'])->name('admin.reports.index');
+    // Route::get('/admin/reports', [AdminReportController::class, 'index'])->name('admin.reports.index');
 
 
 
