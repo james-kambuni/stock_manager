@@ -1,0 +1,114 @@
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=base64:+Xiq8ronRGKUE4sXOyxSPIgf/9gdfLQFhnYrmHcE63Y=
+APP_DEBUG=true
+FORCE_HTTPS=false
+APP_URL=http://localhost
+
+# APP_NAME=Laravel
+# APP_ENV=production
+# APP_KEY=base64:KnlCC/IEoOe9VeYgX2fkxvXQhxB/1G0k13xVILNhf9Q=
+# APP_DEBUG=true
+# APP_URL=https://stock-manager-live-cb880349e4dc.herokuapp.com/
+
+# heroku config:set DB_CONNECTION=mysql
+# heroku config:set DB_HOST=u0zbt18wwjva9e0v.cbetxkdyhwsb.us-east-1.rds.amazonaws.com
+# heroku config:set DB_PORT=3306
+# heroku config:set DB_DATABASE=w34hzzdsv0efsr3c
+# heroku config:set DB_USERNAME=jz74y6vr7y2i9mbw
+# heroku config:set DB_PASSWORD=mskrmjdmqxi0rnaf
+
+# mysql://nefu71f582beh435:emafcgjshtxpxu1n@u0zbt18wwjva9e0v.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/tcie1873yrs9219o
+
+MPESA_SHORTCODE=174379
+MPESA_PASSKEY=bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919
+MPESA_CONSUMER_KEY=NJOP7c1aH87ebLS0ughTNJ5aUBz49TGFeJGajIUkhqzuGlgB
+MPESA_CONSUMER_SECRET=A8Zcqs69H3cOz4AlfyIs2oTh079yASyODxMbLGCr26EyuplzSBhhV3468q4d7iD9
+MPESA_INITIATOR_NAME=testapi
+MPESA_INITIATOR_PASSWORD=Safaricom999!
+MPESA_CALLBACK_URL=https://ef94274142bb.ngrok-free.app.app/api/mpesa/callback
+MPESA_ENV=sandbox
+
+
+
+# MAIL_MAILER=smtp
+# MAIL_HOST=sandbox.smtp.mailtrap.io
+# MAIL_PORT=2525
+# MAIL_USERNAME=fd96345fea63cb
+# MAIL_PASSWORD=bd6479ece841d7
+# MAIL_ENCRYPTION=null
+# MAIL_FROM_ADDRESS=vkambuni@gmail.com
+# MAIL_FROM_NAME="junik"
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=vkambuni@gmail.com
+MAIL_PASSWORD=dpoltneankjqvqus
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=vkambuni@gmail.com
+MAIL_FROM_NAME="${JtechSystems}"
+
+APP_LOCALE=en
+APP_FALLBACK_LOCALE=en
+APP_FAKER_LOCALE=en_US
+
+APP_MAINTENANCE_DRIVER=file
+# APP_MAINTENANCE_STORE=database
+
+PHP_CLI_SERVER_WORKERS=4
+
+BCRYPT_ROUNDS=12
+
+LOG_CHANNEL=stack
+LOG_STACK=single
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=stockdb_multi
+DB_USERNAME=root
+DB_PASSWORD='Ilovecoding@254'
+
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
+
+BROADCAST_CONNECTION=log
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=database
+
+CACHE_STORE=database
+# CACHE_PREFIX=
+
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=log
+MAIL_SCHEME=null
+MAIL_HOST=127.0.0.1
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+VITE_APP_NAME="${APP_NAME}"
+
+APP_TIMEZONE=Africa/Nairobi
+
